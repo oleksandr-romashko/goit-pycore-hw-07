@@ -5,9 +5,11 @@ This module defines the base `Field` class used for contact fields.
 It provides basic storage and string conversion behavior.
 """
 
+from dataclasses import dataclass
 from typing import Any
 
 
+@dataclass
 class Field:
     """
     Base class for contact record fields.
@@ -15,8 +17,7 @@ class Field:
     Stores a single value and provides a default string representation.
     """
 
-    def __init__(self, value: Any):
-        self.value = value
+    value: Any
 
     def __str__(self):
         return str(self.value)
