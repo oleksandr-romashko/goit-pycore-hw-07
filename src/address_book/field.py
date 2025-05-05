@@ -17,10 +17,21 @@ class Field:
     Stores a single value and provides a default string representation.
     """
 
-    value: Any
+    _value: Any
 
     def __str__(self):
         return str(self.value)
+
+    def __repr__(self):
+        return str(self.value)
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, new_value):
+        self._value = new_value
 
 
 if __name__ == "__main__":
