@@ -200,4 +200,4 @@ if __name__ == "__main__":
     assert record_2_find_2[0] == 1
     assert record_2_find_2[1].value == phone_2
 
-    print("All tests passed.")
+    print("Record tests passed.")
