@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from typing import Any
 
 
-@dataclass
+@dataclass(repr=False)
 class Field:
     """
     Base class for contact record fields.
@@ -23,7 +23,7 @@ class Field:
         return str(self.value)
 
     def __repr__(self):
-        return str(self.value)
+        return f"{self.__class__.__name__}(value='{str(self.value)}')"
 
     @property
     def value(self):
@@ -45,5 +45,7 @@ if __name__ == "__main__":
 
     assert str(field_1) == value_1
     assert str(field_2) == value_2
+
+    assert field_1 == Field(value_1)
 
     print("All tests passed.")
