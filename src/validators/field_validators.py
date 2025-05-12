@@ -4,12 +4,15 @@ Validators for field values (name, phone, etc.).
 Validators raise ValidationError with descriptive messages if validation fails.
 """
 import re
+from datetime import datetime
 
 from utils.constants import (
     NAME_MIN_LENGTH,
     NAME_MAX_LENGTH,
     MAX_DISPLAY_NAME_LEN,
     PHONE_FORMAT_DESC_STR,
+    BIRTHDAY_FORMAT,
+    BIRTHDAY_FORMAT_MSG,
 )
 from utils.text_utils import truncate_string
 
@@ -71,3 +74,25 @@ def validate_phone_number(phone: str) -> None:
         raise ValidationError(
             f"Invalid phone number '{phone}'. Expected {PHONE_FORMAT_DESC_STR}."
         )
+
+
+def validate_birthday_date(value: str) -> None:
+    """
+    Validates and parses a birthday string into a date object.
+
+    Args:
+        value (str): The birthday string to validate, expected in the defined format.
+
+    Returns:
+        date: A `datetime.date` object representing the validated birthday.
+
+    Raises:
+        ValidationError: If the input does not match the expected format.
+    """
+    try:
+        date = datetime.strptime(value, BIRTHDAY_FORMAT).date
+        return date
+    except ValueError as exc:
+        cause = f"Invalid provided date format '{value}'."
+        tip = f"Use {BIRTHDAY_FORMAT_MSG} format."
+        raise ValidationError(f"{cause} {tip}") from exc
