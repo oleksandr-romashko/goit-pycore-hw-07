@@ -4,7 +4,7 @@ Validators for field values (name, phone, etc.).
 Validators raise ValidationError with descriptive messages if validation fails.
 """
 import re
-from datetime import datetime
+from datetime import datetime, date
 
 from utils.constants import (
     NAME_MIN_LENGTH,
@@ -76,7 +76,7 @@ def validate_phone_number(phone: str) -> None:
         )
 
 
-def validate_birthday_date(value: str) -> None:
+def validate_birthday_format(value: str) -> date:
     """
     Validates and parses a birthday string into a date object.
 
@@ -90,9 +90,27 @@ def validate_birthday_date(value: str) -> None:
         ValidationError: If the input does not match the expected format.
     """
     try:
-        date = datetime.strptime(value, BIRTHDAY_FORMAT).date
-        return date
+        birth_date = datetime.strptime(value, BIRTHDAY_FORMAT).date()
+        return birth_date
     except ValueError as exc:
         cause = f"Invalid provided date format '{value}'."
         tip = f"Use {BIRTHDAY_FORMAT_MSG} format."
         raise ValidationError(f"{cause} {tip}") from exc
+
+
+def validate_birthday_in_past(birthday: date) -> None:
+    """
+    Validates that the given birthday date passed or today.
+
+    Args:
+        birthday (date): A `datetime.date` object representing the birthday.
+
+    Raises:
+        ValidationError: If the birthday is in the future.
+    """
+    today = date.today()
+    if birthday > today:
+        birthday_str = datetime.strftime(birthday, BIRTHDAY_FORMAT)
+        raise ValidationError(
+            f"Given birthday date '{birthday_str}' can't be in the future."
+        )
