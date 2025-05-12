@@ -5,15 +5,13 @@ This module defines the `Birthday` class which extends `Field` and ensures
 the birth date is valid on assignment or update, following the expected format.
 """
 
-from datetime import date
-
 from field import Field
 from validators.errors import ValidationError
 from validators.field_validators import (
     validate_birthday_format,
     validate_birthday_in_past,
 )
-from utils.constants import BIRTHDAY_FORMAT_MSG
+from utils.constants import BIRTHDAY_FORMAT, BIRTHDAY_FORMAT_MSG
 
 
 class Birthday(Field):
@@ -28,6 +26,14 @@ class Birthday(Field):
         birth_date = validate_birthday_format(value)
         validate_birthday_in_past(birth_date)
         super().__init__(birth_date)
+
+    def __str__(self):
+        return self.value.strftime(BIRTHDAY_FORMAT)
+
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}(value='{self.value.strftime(BIRTHDAY_FORMAT)}')"
+        )
 
 
 if __name__ == "__main__":

@@ -110,7 +110,7 @@ def validate_birthday_in_past(birthday: date) -> None:
     """
     today = date.today()
     if birthday > today:
-        birthday_str = datetime.strftime(birthday, BIRTHDAY_FORMAT)
+        birthday_str = birthday.strftime(BIRTHDAY_FORMAT)
         raise ValidationError(
             f"Given birthday date '{birthday_str}' can't be in the future."
         )
