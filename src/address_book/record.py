@@ -3,13 +3,16 @@ This module defines the Record class for managing a contact's name and associate
 """
 from name import Name
 from phone import Phone
+from birthday import Birthday
 
 from validators.errors import ValidationError
 from validators.contact_validators import MSG_PHONE_EXISTS
 
 MSG_PHONE_ADDED = "Phone added."
-MSG_PHONE_DELETED = "Phone deleted."
 MSG_PHONE_UPDATED = "Phone updated."
+MSG_PHONE_DELETED = "Phone deleted."
+MSG_BIRTHDAY_ADDED = "Birthday added."
+MSG_BIRTHDAY_UPDATED = "Birthday updated."
 
 
 class Record:
@@ -30,6 +33,7 @@ class Record:
     def __init__(self, username: str):
         self.name = Name(username)
         self.phones: list[Phone] = []
+        self.birthday = None
 
     def __str__(self):
         return (
@@ -51,6 +55,25 @@ class Record:
 
         self.phones.append(Phone(phone_number))
         return MSG_PHONE_ADDED
+
+    def add_birthday(self, birthday: Birthday) -> str:
+        """
+        Adds a birthday date to the record.
+
+        If adding birthday is set with other value, updates it.
+
+        Raises:
+            ValidationError: If the same birthday date already set.
+        """
+        if not self.birthday:
+            self.birthday = birthday
+            return MSG_BIRTHDAY_ADDED
+
+        if self.birthday == birthday:
+            raise ValidationError(f"Birthday '{birthday}' is already set.")
+
+        self.birthday = birthday
+        return MSG_BIRTHDAY_UPDATED
 
     def remove_phone(self, phone_number: str) -> str:
         """
@@ -199,5 +222,33 @@ if __name__ == "__main__":
     record_2_find_2 = record_2._find_phone_with_index(phone_2)
     assert record_2_find_2[0] == 1
     assert record_2_find_2[1].value == phone_2
+
+    # Add birthday
+    birthday_str = "05.05.2005"
+    updated_birthday_str = "06.06.2006"
+    birthday = Birthday(birthday_str)
+    updated_birthday = Birthday(updated_birthday_str)
+
+    record_birthday = Record("Bob")
+    assert record_birthday.birthday is None
+
+    birthday_add_result = record_birthday.add_birthday(birthday)
+    assert birthday_add_result == MSG_BIRTHDAY_ADDED
+    assert record_birthday.birthday == birthday
+
+    try:
+        record_birthday.add_birthday(birthday)
+    except ValidationError as exc:
+        error_msg = f"Birthday '{birthday_str}' is already set."
+        assert str(exc) == error_msg
+    else:
+        cause = (
+            "Should raise Validation error when the same birthday date is set already."
+        )
+        assert False, cause
+
+    birthday_update_result = record_birthday.add_birthday(updated_birthday)
+    assert birthday_update_result == MSG_BIRTHDAY_UPDATED
+    assert record_birthday.birthday == updated_birthday
 
     print("Record tests passed.")
