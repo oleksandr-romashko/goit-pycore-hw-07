@@ -32,6 +32,8 @@ class Phone(Field):
 
 
 if __name__ == "__main__":
+    # TESTS
+
     PHONE_NUMBER_STR = "1234567890"
     phone_1 = Phone(PHONE_NUMBER_STR)
     assert phone_1.value == PHONE_NUMBER_STR
