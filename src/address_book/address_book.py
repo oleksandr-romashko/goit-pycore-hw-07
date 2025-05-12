@@ -3,6 +3,7 @@ from collections import UserDict
 from record import Record
 
 from validators.errors import ValidationError
+from validators.args_validators import validate_argument_type
 from validators.contact_validators import (
     validate_contacts_not_empty,
     validate_contact_not_in_contacts,
@@ -61,6 +62,8 @@ class AddressBook(UserDict):
         Returns:
             str: A message confirming the addition.
         """
+        validate_argument_type(contact, Record)
+
         # Prevent from overwriting existing entities
         validate_contact_not_in_contacts(contact.name.value, self.data)
 
@@ -188,6 +191,16 @@ if __name__ == "__main__":
         assert str(exc) == book_str_0_contacts_msg
     else:
         assert False, "Should raise Validation error"
+
+    # Test add contact - incorrect type
+    try:
+        result_add_incorrect_type = book.add_record(object())
+    except TypeError as exc:
+        incorrect_type_msg = "Expected type 'Record', but received type 'object'."
+        assert str(exc) == incorrect_type_msg
+    else:
+        assert False, "Should raise TypeError error when incorrect type"
+    assert len(book.data) == 0
 
     # Test add contact - first contact
     result_add_1 = book.add_record(record_1)

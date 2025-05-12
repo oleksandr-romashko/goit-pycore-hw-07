@@ -4,6 +4,7 @@ Validators for command-line argument structure before further operations.
 These functions check the number and presence of CLI arguments.
 """
 
+from typing import Any
 from validators.errors import ValidationError
 
 
@@ -37,3 +38,19 @@ def validate_is_one_argument_username(args: list[str], _) -> None:
     """
     if len(args) != 1 or len(args[0].strip()) == 0:
         raise ValidationError("You must provide username as a single argument.")
+
+
+def validate_argument_type(obj: Any, obj_type: Any) -> None:
+    """
+    Ensures that the provided object is of the expected type.
+
+    Args:
+        obj: The object to check.
+        obj_type: The expected type or tuple of types.
+
+    Raises:
+        ValidationError: If the object's type is incorrect.
+    """
+    if not isinstance(obj, obj_type):
+        message = f"Expected type '{obj_type.__name__}', but received type '{type(obj).__name__}'."
+        raise TypeError(message)

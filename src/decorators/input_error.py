@@ -30,5 +30,7 @@ def input_error(func):
             return "Missing or incomplete arguments."
         except ValueError:
             return "Invalid input value."
+        except TypeError as exc:
+            return str(exc)
 
     return inner
