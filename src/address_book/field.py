@@ -48,4 +48,4 @@ if __name__ == "__main__":
 
     assert field_1 == Field(value_1)
 
-    print("All tests passed.")
+    print("Field tests passed.")
