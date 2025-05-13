@@ -19,37 +19,94 @@ class Phone(Field):
     """
 
     def __init__(self, phone_number: str):
-        self._validate_phone(phone_number)
+        self._validate_phone_number(phone_number)
         super().__init__(phone_number)
 
     def update_phone(self, phone_number: str):
         """Sets a new validated phone value."""
-        self._validate_phone(phone_number)
+        self._validate_phone_number(phone_number)
         self.value = phone_number
 
-    def _validate_phone(self, phone_number: str):
+    @Field.value.setter
+    def value(self, new_value: str):
+        self._validate_phone_number(new_value)
+        self._value = new_value
+
+    def _validate_phone_number(self, phone_number: str):
         validate_phone_number(phone_number)
 
 
 if __name__ == "__main__":
     # TESTS
 
-    PHONE_NUMBER_STR = "1234567890"
-    phone_1 = Phone(PHONE_NUMBER_STR)
-    assert phone_1.value == PHONE_NUMBER_STR
+    # Test data
+    phone_valid_number_str_1 = "1234567890"
+    phone_valid_number_str_2 = "0987654321"
+    phone_invalid_number_value = "123"
 
+    # Create instance with valid phone number
+    phone_test_1 = Phone(phone_valid_number_str_1)
+    assert phone_test_1.value == phone_valid_number_str_1
+
+    # Create instance with invalid phone number
     try:
-        phone_2 = Phone("123")
+        Phone(phone_invalid_number_value)
     except ValidationError as exc:
         error_msg = (
-            "Invalid phone number '123'. "
+            f"Invalid phone number '{phone_invalid_number_value}'. "
             "Expected 10 digits, optionally starting with '+'."
         )
         assert str(exc) == error_msg
     else:
         cause = (
             "Should raise Validation error "
-            "when creating Phone object with invalid phone number value"
+            "when creating Phone instance with invalid phone number value"
+        )
+        assert False, cause
+
+    # Direct assignment to Phone instance value a valid phone number
+    phone_test_2 = Phone(phone_valid_number_str_1)
+    phone_test_2.value = phone_valid_number_str_2
+    assert phone_test_2.value == phone_valid_number_str_2
+
+    # Direct assignment to Phone instance value an invalid phone number
+    phone_test_3 = Phone(phone_valid_number_str_1)
+    try:
+        phone_test_3.value = phone_invalid_number_value
+    except ValidationError as exc:
+        error_msg = (
+            f"Invalid phone number '{phone_invalid_number_value}'. "
+            "Expected 10 digits, optionally starting with '+'."
+        )
+        assert str(exc) == error_msg
+    else:
+        cause = (
+            "Should raise Validation error "
+            "when updating Phone instance value directly "
+            "with invalid phone number value"
+        )
+        assert False, cause
+    assert phone_test_3.value == phone_valid_number_str_1
+
+    # Update instance with valid phone number
+    phone_test_4 = Phone(phone_valid_number_str_1)
+    phone_test_4.update_phone(phone_valid_number_str_2)
+    assert phone_test_4.value == phone_valid_number_str_2
+
+    # Update instance with invalid phone number
+    phone_test_5 = Phone(phone_valid_number_str_1)
+    try:
+        phone_test_5.update_phone(phone_invalid_number_value)
+    except ValidationError as exc:
+        error_msg = (
+            f"Invalid phone number '{phone_invalid_number_value}'. "
+            "Expected 10 digits, optionally starting with '+'."
+        )
+        assert str(exc) == error_msg
+    else:
+        cause = (
+            "Should raise Validation error "
+            "when updating Phone instance with invalid phone number value"
         )
         assert False, cause
 
