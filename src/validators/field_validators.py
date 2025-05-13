@@ -4,17 +4,17 @@ Validators for field values (name, phone, etc.).
 Validators raise ValidationError with descriptive messages if validation fails.
 """
 import re
-from datetime import datetime, date
+from datetime import date
 
 from utils.constants import (
     NAME_MIN_LENGTH,
     NAME_MAX_LENGTH,
     MAX_DISPLAY_NAME_LEN,
     PHONE_FORMAT_DESC_STR,
-    BIRTHDAY_FORMAT,
     BIRTHDAY_FORMAT_MSG,
 )
 from utils.text_utils import truncate_string
+from date_utils import parse_date, format_date_str
 
 from validators.errors import ValidationError
 
@@ -90,7 +90,7 @@ def validate_birthday_format(value: str) -> date:
         ValidationError: If the input does not match the expected format.
     """
     try:
-        birth_date = datetime.strptime(value, BIRTHDAY_FORMAT).date()
+        birth_date = parse_date(value)
         return birth_date
     except ValueError as exc:
         cause = f"Invalid provided date format '{value}'."
@@ -98,7 +98,7 @@ def validate_birthday_format(value: str) -> date:
         raise ValidationError(f"{cause} {tip}") from exc
 
 
-def validate_birthday_in_past(birthday: date) -> None:
+def validate_birthday_is_in_the_past(birthday: date) -> None:
     """
     Validates that the given birthday date passed or today.
 
@@ -110,7 +110,7 @@ def validate_birthday_in_past(birthday: date) -> None:
     """
     today = date.today()
     if birthday > today:
-        birthday_str = birthday.strftime(BIRTHDAY_FORMAT)
+        birthday_str = format_date_str(birthday)
         raise ValidationError(
             f"Given birthday date '{birthday_str}' can't be in the future."
         )
