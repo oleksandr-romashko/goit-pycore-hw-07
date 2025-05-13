@@ -5,6 +5,8 @@ These functions check the number and presence of CLI arguments.
 """
 
 from typing import Any
+from datetime import date
+
 from validators.errors import ValidationError
 
 
@@ -40,7 +42,7 @@ def validate_is_one_argument_username(args: list[str], _) -> None:
         raise ValidationError("You must provide username as a single argument.")
 
 
-def validate_argument_type(obj: Any, obj_type: Any) -> None:
+def validate_argument_type(obj: object, obj_type: Any | tuple) -> None:
     """
     Ensures that the provided object is of the expected type.
 
@@ -52,5 +54,18 @@ def validate_argument_type(obj: Any, obj_type: Any) -> None:
         ValidationError: If the object's type is incorrect.
     """
     if not isinstance(obj, obj_type):
+        if isinstance(obj_type, tuple):
+            message = (
+                f"Expected type '{', '.join([o_type.__name__ for o_type in obj_type])}', "
+                f"but received type '{type(obj).__name__}'."
+            )
+            raise TypeError(message)
+
         message = f"Expected type '{obj_type.__name__}', but received type '{type(obj).__name__}'."
         raise TypeError(message)
+
+
+if __name__ == "__main__":
+    assert not validate_argument_type("string", str)
+    assert not validate_argument_type("string", (str, date))
+    assert not validate_argument_type(date(2025, 5, 13), (str, date))
