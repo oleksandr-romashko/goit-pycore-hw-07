@@ -5,7 +5,7 @@ This module defines the `Name` class which extends `Field` and ensures
 the contact name is valid on assignment.
 """
 
-from field import Field
+from address_book.field import Field
 from validators.errors import ValidationError
 from validators.field_validators import validate_username_length
 

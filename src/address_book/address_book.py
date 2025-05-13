@@ -1,7 +1,7 @@
 from collections import UserDict
 from datetime import date, timedelta
 
-from record import Record
+from address_book.record import Record
 
 from validators.errors import ValidationError
 from validators.args_validators import validate_argument_type

@@ -1,9 +1,9 @@
 """
 This module defines the Record class for managing a contact's name and associated phone numbers.
 """
-from name import Name
-from phone import Phone
-from birthday import Birthday
+from address_book.name import Name
+from address_book.phone import Phone
+from address_book.birthday import Birthday
 
 from validators.errors import ValidationError
 from validators.contact_validators import MSG_PHONE_EXISTS

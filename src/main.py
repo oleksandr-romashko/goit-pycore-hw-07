@@ -16,6 +16,7 @@ from utils.constants import (
 )
 from utils.input_parser import parse_input
 from decorators.keyboard_interrupt_error import keyboard_interrupt_error
+from address_book.address_book import AddressBook
 from handlers.command_handlers import (
     handle_hello,
     handle_add,
@@ -52,7 +53,7 @@ def main():
     for an Assistant bot CLI application.
     """
 
-    contacts = {}
+    book = AddressBook()
 
     # Display initial greeting and help text
     print_greeting(MENU_HELP_STR)
@@ -96,7 +97,7 @@ def main_alternative():
     Handles user input, command dispatching, and help generation
     for an Assistant bot CLI application.
     """
-    contacts = {}
+    book = AddressBook()
 
     menu = {
         "hello": {

@@ -1,6 +1,7 @@
 {
     // Add paths for Python to recognize the modules in these directories
     "python.analysis.extraPaths": [
+        "${workspaceFolder}/config",
         "${workspaceFolder}/src",
         "${workspaceFolder}/src/address_book",
         "${workspaceFolder}/src/contacts",

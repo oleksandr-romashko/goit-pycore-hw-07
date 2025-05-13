@@ -7,7 +7,7 @@ the birth date is valid on assignment or update, following the expected format.
 
 from datetime import date
 
-from field import Field
+from address_book.field import Field
 from validators.errors import ValidationError
 from validators.args_validators import validate_argument_type
 from validators.field_validators import (
