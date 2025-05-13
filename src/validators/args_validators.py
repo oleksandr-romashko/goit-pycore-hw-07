@@ -69,3 +69,21 @@ if __name__ == "__main__":
     assert not validate_argument_type("string", str)
     assert not validate_argument_type("string", (str, date))
     assert not validate_argument_type(date(2025, 5, 13), (str, date))
+
+    try:
+        validate_argument_type({}, str)
+    except TypeError as exc:
+        error_msg = "Expected type 'str', but received type 'dict'."
+        assert str(exc) == error_msg
+    else:
+        cause = "Should raise TypeError error when type is not of expected type."
+        assert False, cause
+
+    try:
+        validate_argument_type([], (str, date))
+    except TypeError as exc:
+        error_msg = "Expected type 'str, date', but received type 'list'."
+        assert str(exc) == error_msg
+    else:
+        cause = "Should raise TypeError error when type is not of expected types."
+        assert False, cause
