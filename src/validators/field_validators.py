@@ -14,7 +14,7 @@ from utils.constants import (
     BIRTHDAY_FORMAT_MSG,
 )
 from utils.text_utils import truncate_string
-from date_utils import parse_date, format_date_str
+from utils.date_utils import parse_date, format_date_str
 
 from validators.errors import ValidationError
 
