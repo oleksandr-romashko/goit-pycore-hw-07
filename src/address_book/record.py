@@ -36,10 +36,15 @@ class Record:
         self.birthday = None
 
     def __str__(self):
+        birthday_info = f", birthday: {self.birthday}" if self.birthday else ""
         return (
-            f"Contact name: {self.name.value}, "
-            f"phones: {'; '.join(phone.value for phone in self.phones)}"
+            f"Contact name: {self.name}"
+            f"{birthday_info}"
+            f", phones: {'; '.join(phone.value for phone in self.phones)}"
         )
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(name='{self.name}, birthday='{self.birthday}, phones={self.phones}')"
 
     def add_phone(self, phone_number: str) -> str:
         """
@@ -56,7 +61,7 @@ class Record:
         self.phones.append(Phone(phone_number))
         return MSG_PHONE_ADDED
 
-    def add_birthday(self, birthday: Birthday) -> str:
+    def add_birthday(self, date_str: str) -> str:
         """
         Adds a birthday date to the record.
 
@@ -66,13 +71,16 @@ class Record:
             ValidationError: If the same birthday date already set.
         """
         if not self.birthday:
-            self.birthday = birthday
+            self.birthday = Birthday(date_str)
             return MSG_BIRTHDAY_ADDED
 
-        if self.birthday == birthday:
-            raise ValidationError(f"Birthday '{birthday}' is already set.")
+        birthday_update = Birthday(date_str)
 
-        self.birthday = birthday
+        if self.birthday == birthday_update:
+            err_msg = f"Birthday for '{self.name}' is already set to '{date_str}'."
+            raise ValidationError(err_msg)
+
+        self.birthday = birthday_update
         return MSG_BIRTHDAY_UPDATED
 
     def remove_phone(self, phone_number: str) -> str:
@@ -224,30 +232,36 @@ if __name__ == "__main__":
     assert record_2_find_2[1].value == phone_2
 
     # Add birthday
+    birthday_username = "Mike"
     birthday_str = "05.05.2005"
     updated_birthday_str = "06.06.2006"
+
     birthday = Birthday(birthday_str)
     updated_birthday = Birthday(updated_birthday_str)
 
-    record_birthday = Record("Bob")
+    record_birthday = Record(birthday_username)
     assert record_birthday.birthday is None
+    assert str(record_birthday) == f"Contact name: {birthday_username}, phones: "
 
-    birthday_add_result = record_birthday.add_birthday(birthday)
+    birthday_add_result = record_birthday.add_birthday(birthday_str)
     assert birthday_add_result == MSG_BIRTHDAY_ADDED
     assert record_birthday.birthday == birthday
 
     try:
-        record_birthday.add_birthday(birthday)
+        record_birthday.add_birthday(birthday_str)
     except ValidationError as exc:
-        error_msg = f"Birthday '{birthday_str}' is already set."
+        error_msg = (
+            f"Birthday for '{birthday_username}' is already set to '{birthday_str}'."
+        )
         assert str(exc) == error_msg
     else:
         cause = (
             "Should raise Validation error when the same birthday date is set already."
         )
         assert False, cause
+    assert record_birthday.birthday == birthday
 
-    birthday_update_result = record_birthday.add_birthday(updated_birthday)
+    birthday_update_result = record_birthday.add_birthday(updated_birthday_str)
     assert birthday_update_result == MSG_BIRTHDAY_UPDATED
     assert record_birthday.birthday == updated_birthday
 

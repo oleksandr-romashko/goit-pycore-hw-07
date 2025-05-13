@@ -1,4 +1,5 @@
 from collections import UserDict
+from datetime import date, timedelta
 
 from record import Record
 
@@ -9,6 +10,7 @@ from validators.contact_validators import (
     validate_contact_not_in_contacts,
     validate_contact_is_in_contacts,
 )
+from utils.date_utils import is_leap_year, parse_date, format_date_str
 
 MSG_CONTACT_ADDED = "Contact added."
 MSG_CONTACT_DELETED = "Contact deleted."
@@ -149,6 +151,104 @@ class AddressBook(UserDict):
 
         self.data.pop(username)
         return MSG_CONTACT_DELETED
+
+    def get_upcoming_birthdays(
+        self, today: str = None, upcoming_period_days: int = 7
+    ) -> list[dict[str, str]]:
+        """
+        Returns a list of users who have birthdays within the upcoming period from today.
+
+        Each user is a dict with keys "name" and "birthday" in format "YYYY.MM.DD".
+        The returned list contains dicts with "name" and the upcoming
+        "congratulation_date" in string format (YYYY-MM-DD).
+
+        :param users: List of users with "name" and "birthday" keys.
+        :param today: The date to start checking from (default: current date).
+        :param upcoming_period_days: Number of days ahead to check for birthdays (default: 7).
+        :return: List of users with upcoming birthdays sorted by date.
+        """
+        # Assign today each time function is called, not once during function definition
+        if today is None:
+            today_obj = date.today()
+        else:
+            today_obj = parse_date(today)
+
+        # Empty data guard
+        if not self.data:
+            return []
+
+        user_congratulations = []
+
+        for record in self.data.values():
+            # Retrieve birthday object
+            birthday = record.birthday
+
+            # Guard records without birthdays assigned
+            if not birthday:
+                continue
+
+            # Handle the case if birthday is today or upcoming
+            # Handle the case for February 29 birthday
+            if birthday.value.month == 2 and birthday.value.day == 29:
+                if is_leap_year(today_obj.year):
+                    # For leap years, keep February 29
+                    congratulation_date = birthday.value.replace(year=today_obj.year)
+                else:
+                    # For non-leap years, set birthday to March 1
+                    congratulation_date = birthday.value.replace(
+                        year=today_obj.year, month=3, day=1
+                    )
+            else:
+                # For other birthdays, just replace the year
+                congratulation_date = birthday.value.replace(year=today_obj.year)
+
+            # Handle the case if birthday has passed, adjust to next year
+            if congratulation_date < today_obj:
+                # If it's a February 29 birthday in a non-leap year, adjust it to March 1 of next year
+                if congratulation_date.month == 2 and congratulation_date.day == 29:
+                    if not is_leap_year(today_obj.year + 1):
+                        congratulation_date = congratulation_date.replace(
+                            year=today_obj.year + 1, month=3, day=1
+                        )
+                    else:
+                        congratulation_date = congratulation_date.replace(
+                            year=today_obj.year + 1
+                        )
+                else:
+                    # Otherwise just move it to the next year
+                    congratulation_date = congratulation_date.replace(
+                        year=today_obj.year + 1
+                    )
+
+            # Filter dates in upcoming period range and add them to the congratulations list
+            if (
+                today_obj
+                <= congratulation_date
+                <= today_obj + timedelta(upcoming_period_days)
+            ):
+
+                # Shift weekend congratulation to the following Monday
+                if congratulation_date.weekday() == 5:  # Saturday
+                    congratulation_date += timedelta(days=2)
+                elif congratulation_date.weekday() == 6:  # Sunday
+                    congratulation_date += timedelta(days=1)
+
+                # Add congratulation to the list
+                user_congratulations.append(
+                    {
+                        "name": record.name.value,
+                        "congratulation_date": congratulation_date,
+                    }
+                )
+
+        # Sort congratulations by date
+        user_congratulations.sort(key=lambda user: user["congratulation_date"])
+
+        # Convert congratulations date to string date representation
+        for user in user_congratulations:
+            user["congratulation_date"] = format_date_str(user["congratulation_date"])
+
+        return user_congratulations
 
     def _format_records(self, records: list[Record], offset: str = "  ") -> list[str]:
         max_len = max(len(record.name.value) for record in records)
@@ -382,5 +482,88 @@ if __name__ == "__main__":
         assert str(exc) == book_str_0_contacts_after_deletion_msg
     else:
         assert False, "Should raise Validation error"
+
+    # Test birthdays
+    book_birthdays = AddressBook()
+
+    birthday_record_no_birthday = Record("David")
+
+    birthday_record_1 = Record("Alice")
+    birthday_record_1.add_birthday("04.01.2001")
+
+    birthday_record_2 = Record("Bob")
+    birthday_record_2.add_birthday("01.01.2002")
+
+    birthday_record_3 = Record("Charlie")
+    birthday_record_3.add_birthday("31.12.2003")
+
+    # birthdays - test no records ends up empty list
+    birthdays_empty_expected = []
+    birthdays_empty_result = book_birthdays.get_upcoming_birthdays()
+    assert birthdays_empty_expected == birthdays_empty_result
+
+    # birthdays - test record with no birthday are ignored
+    book_birthdays.add_record(birthday_record_no_birthday)
+    birthdays_no_birthday_expected = []
+    birthdays_no_birthday_result = book_birthdays.get_upcoming_birthdays()
+    assert birthdays_no_birthday_expected == birthdays_no_birthday_result
+
+    # birthdays - test single record + move birthday from weekend to closest weekday
+    book_birthdays.add_record(birthday_record_1)
+    birthdays_one_expected = [{"name": "Alice", "congratulation_date": "06.01.2025"}]
+    birthdays_one_result = book_birthdays.get_upcoming_birthdays(today="01.01.2025")
+    assert birthdays_one_expected == birthdays_one_result
+
+    # birthdays - test two records + sort elements by date
+    book_birthdays.add_record(birthday_record_2)
+    birthdays_two_expected = [
+        {"name": "Bob", "congratulation_date": "01.01.2025"},
+        {"name": "Alice", "congratulation_date": "06.01.2025"},
+    ]
+    birthdays_two_result = book_birthdays.get_upcoming_birthdays(today="01.01.2025")
+    assert birthdays_two_expected == birthdays_two_result
+
+    # birthdays - test three records when birthdays out of upcoming period are ignored
+    book_birthdays.add_record(birthday_record_3)
+    birthdays_three_expected = [
+        {"name": "Bob", "congratulation_date": "01.01.2025"},
+        {"name": "Alice", "congratulation_date": "06.01.2025"},
+    ]
+    birthdays_three_result = book_birthdays.get_upcoming_birthdays(today="01.01.2025")
+    assert birthdays_three_expected == birthdays_three_result
+
+    # birthdays - test three records when upcoming passes new year + adding year to upcoming
+    # Note: for "Alice" closest work day after weekend in 2026 is 05.01, not like in 2025 06.01
+    birthdays_passing_new_year_expected = [
+        {"name": "Charlie", "congratulation_date": "31.12.2025"},
+        {"name": "Bob", "congratulation_date": "01.01.2026"},
+        {"name": "Alice", "congratulation_date": "05.01.2026"},
+    ]
+    birthdays_passing_new_year_result = book_birthdays.get_upcoming_birthdays(
+        today="30.12.2025"
+    )
+    assert birthdays_passing_new_year_expected == birthdays_passing_new_year_result
+
+    # birthdays - additional test of upcoming period of whole year
+    birthdays_upcoming_period_1_expected = [
+        {"name": "Bob", "congratulation_date": "01.01.2025"},
+        {"name": "Alice", "congratulation_date": "06.01.2025"},
+        {"name": "Charlie", "congratulation_date": "31.12.2025"},
+    ]
+    birthdays_upcoming_period_1_result = book_birthdays.get_upcoming_birthdays(
+        today="01.01.2025", upcoming_period_days=365
+    )
+    assert birthdays_upcoming_period_1_expected == birthdays_upcoming_period_1_result
+
+    # birthdays - additional test of upcoming period of whole year with correct sorting
+    birthdays_upcoming_period_2_expected = [
+        {"name": "Alice", "congratulation_date": "06.01.2025"},
+        {"name": "Charlie", "congratulation_date": "31.12.2025"},
+        {"name": "Bob", "congratulation_date": "01.01.2026"},
+    ]
+    birthdays_upcoming_period_2_result = book_birthdays.get_upcoming_birthdays(
+        today="03.01.2025", upcoming_period_days=365
+    )
+    assert birthdays_upcoming_period_2_expected == birthdays_upcoming_period_2_result
 
     print("AddressBook tests passed.")
