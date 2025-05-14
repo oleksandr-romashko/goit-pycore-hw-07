@@ -19,13 +19,13 @@ APP_PURPOSE_MESSAGE = "If you'd like, I can help you manage your phone contacts"
 EXIT_MESSAGE = "Good bye!"
 
 # Menu and help text
-MENU_HELP_STR = """hello                         - Greet the user
-add <username> <phone>        - Add a new contact
-change <username> <new_phone> - Update contact's phone number
-phone <username>              - Show contact's phone number
-all                           - Display all contacts
-help                          - Show available commands
-exit (or close)               - Exit the app"""
+MENU_HELP_STR = """hello                                     - Greet the user
+add <username> <phone>                    - Add a new contact or add phone to the existing one
+change <username> <old_phone> <new_phone> - Update contact's phone number
+phone <username>                          - Show contact's phone number
+all                                       - Display all contacts
+help                                      - Show available commands
+exit (or close)                           - Exit the app"""
 HELP_AWARE_TIP = "type 'help' for the available list of commands"
 INPUT_PROMPT = f"Enter a command (or {HELP_AWARE_TIP})"
 
