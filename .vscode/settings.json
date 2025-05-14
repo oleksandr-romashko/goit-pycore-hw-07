@@ -1,13 +1,6 @@
 {
-    // Add paths for VS Code to recognize the modules in these directories
     "python.analysis.extraPaths": [
-        "${workspaceFolder}/config",
-        "${workspaceFolder}/src",
-        "${workspaceFolder}/src/cli",
-        "${workspaceFolder}/src/decorators",
-        "${workspaceFolder}/src/services",
-        "${workspaceFolder}/src/services/address_book",
-        "${workspaceFolder}/src/utils",
-        "${workspaceFolder}/src/validators",
-    ]
+        "${workspaceFolder}/src"
+    ],
+    "python.envFile": "${workspaceFolder}/.env"
 }

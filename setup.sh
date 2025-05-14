@@ -5,7 +5,7 @@ if [ ! -d ".venv" ]; then
   echo "Creating virtual environment..."
   python3 -m venv .venv
 else
-  echo "❌ Virtual environment already exists."
+  echo "⚠️ Virtual environment already exists."
 fi
 
 # Step 2: Activate the virtual environment
@@ -25,15 +25,7 @@ else
   echo "❌ No requirements.txt found."
 fi
 
-# Step 4: Set the PYTHONPATH
-echo "Setting PYTHONPATH..."
-export PYTHONPATH=".:$PYTHONPATH"
-export PYTHONPATH="./src:$PYTHONPATH"
-
-# Inform the user about the environment setup
-echo "✅ Virtual environment set up and PYTHONPATH configured."
-
-# Step 5: Install the git hook scripts for pre-commit
+# Step 4: Install the git hook scripts for pre-commit
 echo "Setting up pre-commit hook for git..."
 if pre-commit install; then
   echo "✅ pre-commit hook set up successfully."
