@@ -1,83 +1,84 @@
 """
 Simple contact management module.
 
-This module provides basic functions to manage a contact list,
-including adding, updating, and displaying contact phone numbers.
+This module provides functions to manage a contact list using an AddressBook instance.
+It includes functionality to add new contacts, update phone numbers, and retrieve contact details.
 
 Functions:
-- add_contact(args, contacts): Adds a new contact.
-- change_contact(args, contacts): Changes an existing contact's phone number.
-- show_phone(args, contacts): Shows the phone number of a contact.
-- show_all(_, contacts): Shows all saved contacts.
+- add_contact(username, phone_number, book): Adds a new contact or appends phone if contact exists.
+- change_contact(username, prev_phone_number, new_phone_number, book): Changes an existing contact's phone number.
+- show_phone(search_term, book): Shows the phone number(s) of a matching contact.
+- show_all(book): Shows all saved contacts.
 """
-from utils.deprecation_warning import transition_warning
+from address_book.address_book import AddressBook
+from address_book.record import Record
 
 
-@transition_warning("Use 'add_record' from address_book.py instead.")
-def add_contact(args: list[str], contacts: dict[str, str]) -> str:
-    """Add a new contact with username and phone number.
-
-    args: [username, phone]
+def add_contact(username: str, phone_number: str, book: AddressBook) -> str:
     """
-    username, phone = args
-    contacts[username] = phone
-    return "Contact added."
+    Add a new contact with a phone number, or append the phone if the contact already exists.
 
+    Args:
+        username (str): Name of the contact.
+        phone_number (str): Phone number to add.
+        book (AddressBook): The address book instance to update.
 
-@transition_warning("Use 'edit_phone' from record.py instead.")
-def change_contact(args: list[str], contacts: dict[str, str]) -> str:
-    """Update the phone number of an existing contact.
-
-    args: [username, new_phone]
+    Returns:
+        str: Result message indicating success or duplication.
     """
-    username, phone = args
-    contacts[username] = phone
-    return "Contact updated."
+    record: Record = book.get(username)
+
+    if not record:
+        record = Record(username)
+        record.add_phone(phone_number)
+        return book.add_record(record)
+
+    return record.add_phone(phone_number)
 
 
-@transition_warning("Use 'find_with_partial_match' of address_book instance instead.")
-def show_phone(args: list[str], contacts: dict[str, str]) -> str:
+def change_contact(
+    username: str, prev_phone_number: str, new_phone_number: str, book: AddressBook
+) -> str:
     """
-    Display the phone number(s) for the specified contact
-    (case-insensitive, partial match allowed).
+    Update an existing contact's phone number.
 
-    args: [search_term]
+    Args:
+        username (str): Contact's name.
+        prev_phone_number (str): Old phone number to replace.
+        new_phone_number (str): New phone number to set.
+        book (AddressBook): The address book instance containing the contact.
+
+    Returns:
+        str: Result message from the phone update operation.
     """
-    search_term = args[0].lower()
-    matches = []
-
-    for username, phone in contacts.items():
-        # case-insensitive, partial match
-        if search_term.lower() in username.lower():
-            matches.append((username, phone))
-
-    if not matches:
-        return "No matches found."
-
-    # Find length of the longest username for alignment
-    max_len = max(len(username) for username, _ in matches)
-
-    # Create aligned output
-    output_lines = [
-        f"  {username.ljust(max_len)} : {phone}" for username, phone in matches
-    ]
-    return (
-        f"Found {len(matches)} match{'es' if len(matches) != 1 else ''}:\n"
-        + "\n".join(output_lines)
-    )
+    record = book.find(username)
+    return record.edit_phone(prev_phone_number, new_phone_number)
 
 
-@transition_warning("Use string representation of address_book instance instead.")
-def show_all(_: list[str], contacts: dict[str, str]) -> str:
-    """Return all saved contacts with their phone numbers."""
-    # Find length of the longest username for alignment
-    max_len = max(len(username) for username in contacts)
+def show_phone(search_term: str, book: AddressBook) -> str:
+    """
+    Display phone number(s) for a contact matching the search term.
 
-    # Create aligned output
-    output_lines = [
-        f"  {username.ljust(max_len)} : {phone}" for username, phone in contacts.items()
-    ]
-    return (
-        f"You have {len(contacts)} contact{'s' if len(contacts) != 1 else ''}:\n"
-        + "\n".join(output_lines)
-    )
+    Partial and case-insensitive matching is supported.
+
+    Args:
+        search_term (str): Search keyword (full or partial contact name).
+        book (AddressBook): The address book instance to search.
+
+    Returns:
+        str: Matching contact(s) and phone number(s) as string.
+    """
+    return book.find_match(search_term)
+
+
+def show_all(book: AddressBook) -> str:
+    """
+    Return all contacts in the address book with their phone numbers.
+
+    Args:
+        book (AddressBook): The address book instance.
+
+    Returns:
+        str: All contacts as a formatted string.
+    """
+    return str(book)
