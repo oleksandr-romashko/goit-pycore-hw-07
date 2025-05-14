@@ -1,8 +1,8 @@
 """
-Command handlers for the Assistant Bot.
+Command handlers for CLI application.
 
-Each handler corresponds to a user command and includes input validation,
-business logic, and response generation.
+Each handler corresponds to a specific user command and includes input validation,
+invokes business logic, and generates an appropriate response.
 """
 
 import sys
@@ -16,62 +16,61 @@ from utils.constants import (
     EXIT_MESSAGE,
 )
 from decorators.input_error import input_error
-from validators.args_validators import (
-    validate_are_two_arguments,
-    validate_is_one_argument_username,
-)
-from validators.contact_validators import (
-    validate_contact_not_in_contacts_wrapper,
-    validate_contact_is_in_contacts_wrapper,
-    validate_contact_username_length,
-    validate_contact_phone_number,
-    validate_not_phone_duplicate,
-    validate_contacts_not_empty_wrapper,
-)
+from validators.args_validators import validate_args_have_n_arguments
 from contacts.contacts_manager import add_contact, change_contact, show_phone, show_all
 
 
 def handle_hello() -> str:
-    """Returns a hello message to the user."""
+    """Returns a greeting message to the user."""
     # No validation checks here
     return f"{HELLO_MESSAGE}\n{APP_PURPOSE_MESSAGE}."
 
 
 @input_error
-def handle_add(args: list[str], contacts: dict[str, str]) -> str:
-    """Adds a new contact after validation."""
-    validate_are_two_arguments(args, contacts)
-    validate_contact_username_length(args, contacts)
-    validate_contact_phone_number(args, contacts)
-    validate_contact_not_in_contacts_wrapper(args, contacts)
-    return add_contact(args, contacts)
+def handle_add(args: list[str], book: dict) -> str:
+    """
+    Add a new contact.
+
+    Expected args: [username, phone_number]
+    """
+    validate_args_have_n_arguments(args, 2, "username and a phone number")
+    username, phone_number = args
+    return add_contact(username, phone_number, book)
 
 
 @input_error
-def handle_change(args: list[str], contacts: dict[str, str]) -> str:
-    """Changes an existing contact's number after validation."""
-    validate_are_two_arguments(args, contacts)
-    validate_contact_phone_number(args, contacts)
-    validate_contact_is_in_contacts_wrapper(args, contacts)
-    validate_not_phone_duplicate(args, contacts)
-    return change_contact(args, contacts)
+def handle_change(args: list[str], book: dict) -> str:
+    """
+    Change an existing contact's phone number.
+
+    Expected args: [username, old_phone_number, new_phone_number]
+    """
+    validate_args_have_n_arguments(
+        args, 3, "username, old phone number and new phone number"
+    )
+    username, prev_phone_number, new_phone_number = args
+    return change_contact(username, prev_phone_number, new_phone_number, book)
 
 
 @input_error
-def handle_phone(args: list[str], contacts: dict[str, str]) -> str:
-    """Returns phone numbers matching the username (partial match supported)."""
-    validate_is_one_argument_username(args, contacts)
+def handle_phone(args: list[str], book: dict) -> str:
+    """
+    Return phone numbers for contacts matching the search term (partial match supported).
+
+    Expected args: [search_term]
+    """
+    validate_args_have_n_arguments(args, 1, "username")
     # Partial match is supported - the check if username is in the
     # contacts list (with partial match) is not checked by validator and
-    # postponed further to the handler function
-    return show_phone(args, contacts)
+    # postponed further to the handler
+    search_term = args[0]
+    return show_phone(search_term, book)
 
 
 @input_error
-def handle_all(args: list[str], contacts: dict[str, str]) -> str:
-    """Displays all saved contacts after validation."""
-    validate_contacts_not_empty_wrapper(args, contacts)
-    return show_all(args, contacts)
+def handle_all(_, book: dict) -> str:
+    """Return a string listing all saved contacts and their phone numbers."""
+    return show_all(book)
 
 
 def handle_help() -> str:
@@ -81,7 +80,7 @@ def handle_help() -> str:
 
 
 def handle_exit(prefix="", suffix="") -> None:
-    """Prints exit message and exits the program."""
+    """Print a farewell message and terminate the program."""
     # No validation here
     print(f"{prefix}{EXIT_MESSAGE}{f' {suffix}' if suffix else ''}")
     sys.exit(0)
