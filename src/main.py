@@ -114,19 +114,19 @@ def main_alternative():
             "visible": True,
         },
         "add": {
-            "args_str": "<username> <phone>",
+            "args_str": "<name> <phone>",
             "description": "Add a new contact or add phone to the existing one",
             "handler": handle_add,
             "visible": True,
         },
         "change": {
-            "args_str": "<username> <old_phone> <new_phone>",
+            "args_str": "<name> <old_phone> <new_phone>",
             "description": "Update contact's phone number",
             "handler": handle_change,
             "visible": True,
         },
         "phone": {
-            "args_str": "<username>",
+            "args_str": "<name>",
             "description": "Show contact's phone number",
             "handler": handle_phone,
             "visible": True,
