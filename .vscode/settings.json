@@ -2,5 +2,10 @@
     "python.analysis.extraPaths": [
         "${workspaceFolder}/src"
     ],
-    "python.envFile": "${workspaceFolder}/.env"
+    "python.envFile": "${workspaceFolder}/.env",
+    "cSpell.words": [
+        "ERRORLEVEL",
+        "venv",
+        "dotenv"
+    ]
 }
