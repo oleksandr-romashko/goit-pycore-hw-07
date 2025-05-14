@@ -22,6 +22,7 @@ if exist "requirements.txt" (
 
 :: Step 4: Set the PYTHONPATH
 echo Setting PYTHONPATH...
+set PYTHONPATH=.;%PYTHONPATH%
 set PYTHONPATH=.\src;%PYTHONPATH%
 
 :: Inform the user about the environment setup

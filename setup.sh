@@ -27,6 +27,7 @@ fi
 
 # Step 4: Set the PYTHONPATH
 echo "Setting PYTHONPATH..."
+export PYTHONPATH=".:$PYTHONPATH"
 export PYTHONPATH="./src:$PYTHONPATH"
 
 # Inform the user about the environment setup
