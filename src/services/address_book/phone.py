@@ -5,9 +5,10 @@ This module defines the `Phone` class which extends `Field` and ensures
 the phone number is valid on assignment or update.
 """
 
-from address_book.field import Field
-from validators.field_validators import validate_phone_number
 from validators.errors import ValidationError
+from validators.field_validators import validate_phone_number
+
+from .field import Field
 
 
 class Phone(Field):

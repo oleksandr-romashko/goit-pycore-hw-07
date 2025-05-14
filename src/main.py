@@ -6,18 +6,7 @@ from colorama import init, Style
 
 from config import DEBUG
 
-from utils.log_config import init_logging
-from utils.constants import (
-    WELCOME_MESSAGE_TITLE,
-    WELCOME_MESSAGE_SUBTITLE,
-    INPUT_PROMPT,
-    INVALID_EMPTY_COMMAND_MESSAGE,
-    MENU_HELP_STR,
-)
-from utils.input_parser import parse_input
-from decorators.keyboard_interrupt_error import keyboard_interrupt_error
-from address_book.address_book import AddressBook
-from handlers.command_handlers import (
+from cli.command_handlers import (
     handle_hello,
     handle_add,
     handle_change,
@@ -27,6 +16,17 @@ from handlers.command_handlers import (
     handle_exit,
     handle_unknown,
 )
+from decorators.keyboard_interrupt_error import keyboard_interrupt_error
+from services.address_book.address_book import AddressBook
+from utils.constants import (
+    WELCOME_MESSAGE_TITLE,
+    WELCOME_MESSAGE_SUBTITLE,
+    INPUT_PROMPT,
+    INVALID_EMPTY_COMMAND_MESSAGE,
+    MENU_HELP_STR,
+)
+from utils.input_parser import parse_input
+from utils.log_config import init_logging
 
 # Initialize the environment
 init_logging(logging.DEBUG if DEBUG else logging.INFO)  # Logging

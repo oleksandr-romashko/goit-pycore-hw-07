@@ -7,6 +7,8 @@ invokes business logic, and generates an appropriate response.
 
 import sys
 
+from decorators.input_error import input_error
+from services.contacts_manager import add_contact, change_contact, show_phone, show_all
 from utils.constants import (
     HELLO_MESSAGE,
     APP_PURPOSE_MESSAGE,
@@ -15,9 +17,7 @@ from utils.constants import (
     HELP_AWARE_TIP,
     EXIT_MESSAGE,
 )
-from decorators.input_error import input_error
 from validators.args_validators import validate_args_have_n_arguments
-from contacts.contacts_manager import add_contact, change_contact, show_phone, show_all
 
 
 def handle_hello() -> str:

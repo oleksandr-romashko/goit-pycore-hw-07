@@ -1,8 +1,15 @@
-from collections import UserDict
+"""
+Module for managing an address book of contact records.
+
+This module defines the AddressBook class, which serves as a container
+and manager for multiple contact records. It supports adding, retrieving,
+searching, and displaying records. Each record typically includes a name
+and a list of associated phone numbers.
+"""
 from datetime import date, timedelta
+from collections import UserDict
 
-from address_book.record import Record
-
+from utils.date_utils import is_leap_year, parse_date, format_date_str
 from validators.errors import ValidationError
 from validators.args_validators import validate_argument_type
 from validators.contact_validators import (
@@ -10,7 +17,8 @@ from validators.contact_validators import (
     validate_contact_not_in_contacts,
     validate_contact_is_in_contacts,
 )
-from utils.date_utils import is_leap_year, parse_date, format_date_str
+
+from .record import Record
 
 MSG_CONTACT_ADDED = "Contact added."
 MSG_CONTACT_DELETED = "Contact deleted."

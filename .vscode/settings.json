@@ -1,12 +1,12 @@
 {
-    // Add paths for Python to recognize the modules in these directories
+    // Add paths for VS Code to recognize the modules in these directories
     "python.analysis.extraPaths": [
         "${workspaceFolder}/config",
         "${workspaceFolder}/src",
-        "${workspaceFolder}/src/address_book",
-        "${workspaceFolder}/src/contacts",
+        "${workspaceFolder}/src/cli",
         "${workspaceFolder}/src/decorators",
-        "${workspaceFolder}/src/handlers",
+        "${workspaceFolder}/src/services",
+        "${workspaceFolder}/src/services/address_book",
         "${workspaceFolder}/src/utils",
         "${workspaceFolder}/src/validators",
     ]
