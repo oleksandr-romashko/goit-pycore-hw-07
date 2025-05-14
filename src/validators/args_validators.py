@@ -1,7 +1,7 @@
 """
 Validators for command-line argument structure before further operations.
 
-These functions check the number and presence of CLI arguments.
+These functions check the number and presence of CLI arguments and types.
 """
 
 from typing import Any
@@ -10,80 +10,68 @@ from datetime import date
 from validators.errors import ValidationError
 
 
-def validate_are_two_arguments(args: list[str], _) -> None:
+def validate_args_have_n_arguments(
+    args: list[str], expected: int, details: str = ""
+) -> None:
     """
-    Ensures two non-empty arguments are provided: username and phone number.
+    Ensures the given number of non-empty arguments are provided.
 
     Args:
-        args (list[str]): args[0] = username, args[1] = phone number.
-        _ (Any): Placeholder for contacts dictionary, unused here.
+        args (list[str]): List of arguments.
+        expected (int): The number of expected non-empty arguments.
+        details (str, optional): Additional message for clarification.
 
     Raises:
-        ValidationError: If arguments are missing or empty.
+        ValidationError: If the number of arguments is incorrect or any are empty.
     """
-    if len(args) != 2 or len(args[0].strip()) == 0 or len(args[1].strip()) == 0:
-        raise ValidationError(
-            "You must provide two arguments, username and a phone number."
-        )
-
-
-def validate_is_one_argument_username(args: list[str], _) -> None:
-    """
-    Ensures a single non-empty argument (username) is provided.
-
-    Args:
-        args (list[str]): args[0] = username.
-        _ (Any): Placeholder for contacts dictionary, unused here.
-
-    Raises:
-        ValidationError: If username is missing or empty.
-    """
-    if len(args) != 1 or len(args[0].strip()) == 0:
-        raise ValidationError("You must provide username as a single argument.")
+    if len(args) != expected or not all(arg.strip() for arg in args):
+        msg = f"You must provide {expected} non-empty argument{'s' if expected != 1 else ''}"
+        if details:
+            msg += f" ({details})"
+        msg += "."
+        raise ValidationError(msg)
 
 
 def validate_argument_type(obj: object, obj_type: Any | tuple) -> None:
     """
-    Ensures that the provided object is of the expected type.
+    Ensures the provided object is of one of the expected types.
 
     Args:
         obj: The object to check.
         obj_type: The expected type or tuple of types.
 
     Raises:
-        ValidationError: If the object's type is incorrect.
+        TypeError: If the object's type is incorrect.
     """
     if not isinstance(obj, obj_type):
         if isinstance(obj_type, tuple):
-            message = (
-                f"Expected type '{', '.join([o_type.__name__ for o_type in obj_type])}', "
-                f"but received type '{type(obj).__name__}'."
-            )
-            raise TypeError(message)
+            expected = ", ".join([o_type.__name__ for o_type in obj_type])
+        else:
+            expected = obj_type.__name__
 
-        message = f"Expected type '{obj_type.__name__}', but received type '{type(obj).__name__}'."
-        raise TypeError(message)
+        actual = type(obj).__name__
+        raise TypeError(f"Expected type '{expected}', but received type '{actual}'.")
 
 
 if __name__ == "__main__":
-    assert not validate_argument_type("string", str)
-    assert not validate_argument_type("string", (str, date))
-    assert not validate_argument_type(date(2025, 5, 13), (str, date))
+    # TESTS
+
+    validate_argument_type("string", str)
+    validate_argument_type("string", (str, date))
+    validate_argument_type(date(2025, 5, 13), (str, date))
 
     try:
         validate_argument_type({}, str)
     except TypeError as exc:
-        error_msg = "Expected type 'str', but received type 'dict'."
-        assert str(exc) == error_msg
+        assert str(exc) == "Expected type 'str', but received type 'dict'."
     else:
-        cause = "Should raise TypeError error when type is not of expected type."
-        assert False, cause
+        assert False, "Should raise TypeError error when type is not of expected type."
 
     try:
         validate_argument_type([], (str, date))
     except TypeError as exc:
-        error_msg = "Expected type 'str, date', but received type 'list'."
-        assert str(exc) == error_msg
+        assert str(exc) == "Expected type 'str, date', but received type 'list'."
     else:
-        cause = "Should raise TypeError error when type is not of expected types."
-        assert False, cause
+        assert False, "Should raise TypeError error when type is not of expected types."
+
+    print("Args validator tests passed.")
