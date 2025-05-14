@@ -6,9 +6,9 @@ from address_book.phone import Phone
 from address_book.birthday import Birthday
 
 from validators.errors import ValidationError
-from validators.contact_validators import MSG_PHONE_EXISTS
 
 MSG_PHONE_ADDED = "Phone added."
+MSG_PHONE_EXISTS = "Contact '{0}' has '{1}' phone number already."
 MSG_PHONE_UPDATED = "Phone updated."
 MSG_PHONE_DELETED = "Phone deleted."
 MSG_BIRTHDAY_ADDED = "Birthday added."
