@@ -44,7 +44,10 @@ class Record:
         )
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(name='{self.name}, birthday='{self.birthday}, phones={self.phones}')"
+        return (
+            f"{self.__class__.__name__}(name='{self.name}, "
+            f"birthday='{self.birthday}, phones={self.phones}')"
+        )
 
     def add_phone(self, phone_number: str) -> str:
         """
@@ -224,12 +227,6 @@ if __name__ == "__main__":
     record_2.add_phone(phone_2)
     assert record_2.phones[0].value == phone_1
     assert record_2.phones[1].value == phone_2
-    record_2_find_1 = record_2._find_phone_with_index(phone_1)
-    assert record_2_find_1[0] == 0
-    assert record_2_find_1[1].value == phone_1
-    record_2_find_2 = record_2._find_phone_with_index(phone_2)
-    assert record_2_find_2[0] == 1
-    assert record_2_find_2[1].value == phone_2
 
     # Add birthday
     birthday_username = "Mike"

@@ -1,12 +1,16 @@
 """
 Simple contact management module.
 
-This module provides functions to manage a contact list using an AddressBook instance.
-It includes functionality to add new contacts, update phone numbers, and retrieve contact details.
+This module provides functions to manage a contact list using an AddressBook
+instance.
+It includes functionality to add new contacts, update phone numbers, and
+retrieve contact details.
 
 Functions:
-- add_contact(username, phone_number, book): Adds a new contact or appends phone if contact exists.
-- change_contact(username, prev_phone_number, new_phone_number, book): Changes an existing contact's phone number.
+- add_contact(username, phone_number, book): Adds a new contact or appends phone
+  if contact exists.
+- change_contact(username, prev_phone_number, new_phone_number, book): Changes
+  an existing contact's phone number.
 - show_phone(search_term, book): Shows the phone number(s) of a matching contact.
 - show_all(book): Shows all saved contacts.
 """

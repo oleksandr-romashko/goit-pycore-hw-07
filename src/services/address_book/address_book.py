@@ -212,7 +212,8 @@ class AddressBook(UserDict):
 
             # Handle the case if birthday has passed, adjust to next year
             if congratulation_date < today_obj:
-                # If it's a February 29 birthday in a non-leap year, adjust it to March 1 of next year
+                # If it's a February 29 birthday in a non-leap year,
+                # adjust it to March 1 of next year
                 if congratulation_date.month == 2 and congratulation_date.day == 29:
                     if not is_leap_year(today_obj.year + 1):
                         congratulation_date = congratulation_date.replace(
@@ -316,7 +317,7 @@ if __name__ == "__main__":
     assert len(book.data) == 1
 
     # Test __str__ with 1 record
-    book_str_1_contact_msg = "You have 1 contact:\n" "  Alice : 1234567890"
+    book_str_1_contact_msg = "You have 1 contact:\n  Alice : 1234567890"
     assert str(book) == book_str_1_contact_msg
 
     # Test add contact - second contact
