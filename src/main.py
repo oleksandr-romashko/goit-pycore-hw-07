@@ -73,13 +73,13 @@ def main():
             case "hello":
                 print(handle_hello())
             case "add":
-                print(handle_add(args, contacts))
+                print(handle_add(args, book))
             case "change":
-                print(handle_change(args, contacts))
+                print(handle_change(args, book))
             case "phone":
-                print(handle_phone(args, contacts))
+                print(handle_phone(args, book))
             case "all":
-                print(handle_all(args, contacts))
+                print(handle_all(args, book))
             case "help":
                 print(handle_help())
             case "close" | "exit":
@@ -115,12 +115,12 @@ def main_alternative():
         },
         "add": {
             "args_str": "<username> <phone>",
-            "description": "Add a new contact",
+            "description": "Add a new contact or add phone to the existing one",
             "handler": handle_add,
             "visible": True,
         },
         "change": {
-            "args_str": "<username> <new_phone>",
+            "args_str": "<username> <old_phone> <new_phone>",
             "description": "Update contact's phone number",
             "handler": handle_change,
             "visible": True,
@@ -242,7 +242,7 @@ def main_alternative():
 
         # Call handling function
         handler = metadata.get("handler")
-        result = handler(args, contacts)
+        result = handler(args, book)
         if result:
             print(result)
 
