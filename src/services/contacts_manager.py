@@ -14,8 +14,8 @@ Functions:
 - show_phone(search_term, book): Shows the phone number(s) of a matching contact.
 - show_all(book): Shows all saved contacts.
 """
-from .address_book.address_book import AddressBook
-from .address_book.record import Record
+from services.address_book.address_book import AddressBook
+from services.address_book.record import Record
 
 
 def add_contact(username: str, phone_number: str, book: AddressBook) -> str:

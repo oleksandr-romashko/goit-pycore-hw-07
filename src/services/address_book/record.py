@@ -3,9 +3,9 @@ This module defines the Record class for managing a contact's name and associate
 """
 from validators.errors import ValidationError
 
-from .birthday import Birthday
-from .name import Name
-from .phone import Phone
+from services.address_book.birthday import Birthday
+from services.address_book.name import Name
+from services.address_book.phone import Phone
 
 MSG_PHONE_ADDED = "Phone added."
 MSG_PHONE_EXISTS = "Contact '{0}' has '{1}' phone number already."

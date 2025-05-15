@@ -9,6 +9,8 @@ and a list of associated phone numbers.
 from datetime import date, timedelta
 from collections import UserDict
 
+from services.address_book.record import Record
+
 from utils.date_utils import is_leap_year, parse_date, format_date_str
 from validators.errors import ValidationError
 from validators.args_validators import validate_argument_type
@@ -17,8 +19,6 @@ from validators.contact_validators import (
     validate_contact_not_in_contacts,
     validate_contact_is_in_contacts,
 )
-
-from .record import Record
 
 MSG_CONTACT_ADDED = "Contact added."
 MSG_CONTACT_DELETED = "Contact deleted."
@@ -292,7 +292,7 @@ if __name__ == "__main__":
 
     # Test __str__ with 0 records
     book_str_0_contacts_msg = (
-        "You don't have any contacts yet, but you can add one anytime."
+        "You don't have contacts yet, but you can add one anytime."
     )
     try:
         str(book)
@@ -439,7 +439,7 @@ if __name__ == "__main__":
     except ValidationError as exc:
         assert (
             str(exc)
-            == "Contact 'alex' not found, but a contact exists under 'Alex'. Did you mean 'Alex'?"
+            == "Contact 'alex' not found. However, a contact with a similar name exists as 'Alex'. Did you mean 'Alex'?"
         )
     else:
         assert False, "Should raise Validation error"
@@ -483,7 +483,7 @@ if __name__ == "__main__":
 
     # Test __str__ with 0 records after all have been deleted
     book_str_0_contacts_after_deletion_msg = (
-        "You don't have any contacts yet, but you can add one anytime."
+        "You don't have contacts yet, but you can add one anytime."
     )
     try:
         str(book)

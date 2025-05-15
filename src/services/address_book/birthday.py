@@ -7,6 +7,8 @@ the birth date is valid on assignment or update, following the expected format.
 
 from datetime import date
 
+from services.address_book.field import Field
+
 from utils.constants import BIRTHDAY_FORMAT_MSG
 from utils.date_utils import format_date_str
 from validators.args_validators import validate_argument_type
@@ -15,8 +17,6 @@ from validators.field_validators import (
     validate_birthday_format,
     validate_birthday_is_in_the_past,
 )
-
-from .field import Field
 
 
 class Birthday(Field):
