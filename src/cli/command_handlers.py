@@ -8,7 +8,15 @@ invokes business logic, and generates an appropriate response.
 import sys
 
 from decorators.input_error import input_error
-from services.contacts_manager import add_contact, change_contact, show_phone, show_all
+from services.contacts_manager import (
+    show_all,
+    add_contact,
+    change_contact,
+    show_phone,
+    add_birthday,
+    show_birthday,
+    show_upcoming_birthday,
+)
 from utils.constants import (
     HELLO_MESSAGE,
     APP_PURPOSE_MESSAGE,
@@ -24,6 +32,13 @@ def handle_hello() -> str:
     """Returns a greeting message to the user."""
     # No validation checks here
     return f"{HELLO_MESSAGE}\n{APP_PURPOSE_MESSAGE}."
+
+
+@input_error
+def handle_all(book: dict) -> str:
+    """Return a string listing all saved contacts and their phone numbers."""
+    # No validation checks here
+    return show_all(book)
 
 
 @input_error
@@ -68,9 +83,34 @@ def handle_phone(args: list[str], book: dict) -> str:
 
 
 @input_error
-def handle_all(_, book: dict) -> str:
-    """Return a string listing all saved contacts and their phone numbers."""
-    return show_all(book)
+def handle_add_birthday(args: list[str], book: dict):
+    """
+    Adds a birthday to the specified contact.
+
+    Expected args: [username, date]
+    """
+    validate_args_have_n_arguments(args, 2, "username and a birthday")
+    username, date = args
+    return add_birthday(username, date, book)
+
+
+@input_error
+def handle_show_birthday(args: list[str], book: dict):
+    """
+    Displays the birthday of the specified contact.
+
+    Expected args: [username]
+    """
+    validate_args_have_n_arguments(args, 1, "username")
+    username = args[0]
+    return show_birthday(username, book)
+
+
+@input_error
+def handle_birthdays(book: dict):
+    """Displays all birthdays occurring in the upcoming 7 days."""
+    # No validation checks here
+    return show_upcoming_birthday(book)
 
 
 def handle_help() -> str:

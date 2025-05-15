@@ -20,10 +20,13 @@ EXIT_MESSAGE = "Good bye!"
 
 # Menu and help text
 MENU_HELP_STR = """hello                                 - Greet the user
+all                                   - Display all contacts
 add <name> <phone>                    - Add a new contact or add phone to the existing one
 change <name> <old_phone> <new_phone> - Update contact's phone number
 phone <name>                          - Show contact's phone number
-all                                   - Display all contacts
+add-birthday <name> <birthday_date>   - Add a birthday to the specified contact
+show-birthday <name>                  - Show the birthday of the specified contact
+birthdays                             - Show upcoming birthdays within the next 7 days
 help                                  - Show available commands
 exit (or close)                       - Exit the app"""
 HELP_AWARE_TIP = "type 'help' for the available list of commands"

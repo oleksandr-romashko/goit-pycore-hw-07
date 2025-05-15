@@ -8,10 +8,13 @@ from config import DEBUG
 
 from cli.command_handlers import (
     handle_hello,
+    handle_all,
     handle_add,
     handle_change,
     handle_phone,
-    handle_all,
+    handle_add_birthday,
+    handle_show_birthday,
+    handle_birthdays,
     handle_help,
     handle_exit,
     handle_unknown,
@@ -72,14 +75,20 @@ def main():
         match command:
             case "hello":
                 print(handle_hello())
+            case "all":
+                print(handle_all(book))
             case "add":
                 print(handle_add(args, book))
             case "change":
                 print(handle_change(args, book))
             case "phone":
                 print(handle_phone(args, book))
-            case "all":
-                print(handle_all(args, book))
+            case "add-birthday":
+                print(handle_add_birthday(args, book))
+            case "show-birthday":
+                print(handle_show_birthday(args, book))
+            case "birthdays":
+                print(handle_birthdays(book))
             case "help":
                 print(handle_help())
             case "close" | "exit":
@@ -113,6 +122,12 @@ def main_alternative():
             "handler": lambda _, __: handle_hello(),
             "visible": True,
         },
+        "all": {
+            "args_str": "",
+            "description": "Display all contacts",
+            "handler": lambda _, book: handle_all(book),
+            "visible": True,
+        },
         "add": {
             "args_str": "<name> <phone>",
             "description": "Add a new contact or add phone to the existing one",
@@ -131,10 +146,22 @@ def main_alternative():
             "handler": handle_phone,
             "visible": True,
         },
-        "all": {
+        "add-birthday": {
+            "args_str": "<name> <birthday_date>",
+            "description": "Add a birthday to the specified contact",
+            "handler": handle_add_birthday,
+            "visible": True,
+        },
+        "show-birthday": {
+            "args_str": "<name>",
+            "description": "Show the birthday of the specified contact",
+            "handler": handle_show_birthday,
+            "visible": True,
+        },
+        "birthdays": {
             "args_str": "",
-            "description": "Display all contacts",
-            "handler": handle_all,
+            "description": "Show upcoming birthdays within the next 7 days",
+            "handler": lambda _, book: handle_birthdays(book),
             "visible": True,
         },
         "help": {

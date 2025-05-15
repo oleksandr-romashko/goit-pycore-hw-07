@@ -61,7 +61,7 @@ def change_contact(
 
 def show_phone(search_term: str, book: AddressBook) -> str:
     """
-    Display phone number(s) for a contact matching the search term.
+    Retrieve the phone number(s) for a contact matching the search term.
 
     Partial and case-insensitive matching is supported.
 
@@ -73,6 +73,51 @@ def show_phone(search_term: str, book: AddressBook) -> str:
         str: Matching contact(s) and phone number(s) as string.
     """
     return book.find_match(search_term)
+
+
+def add_birthday(username: str, date: str, book: AddressBook) -> str:
+    """
+    Add a birthday to the specified contact.
+
+    Args:
+        username (str): Contact's name.
+        date (str): Birthday in string format.
+        book (AddressBook): Address book instance.
+
+    Returns:
+        str: Result message indicating success on add or update operation.
+    """
+    # TODO: Implement logic to parse date and assign birthday to contact
+    pass
+
+
+def show_birthday(username: str, book: AddressBook) -> str:
+    """
+    Retrieve the birthday of the specified contact.
+
+    Args:
+        username (str): Contact's name.
+        book (AddressBook): Address book instance.
+
+    Returns:
+        str: Birthday string.
+    """
+    # TODO: Implement logic to fetch and return birthday
+    pass
+
+
+def show_upcoming_birthday(book: AddressBook) -> str:
+    """
+    Retrieve birthdays occurring in the next 7 days.
+
+    Args:
+        book (AddressBook): Address book instance.
+
+    Returns:
+        str: Formatted list of upcoming birthdays.
+    """
+    # TODO: Implement logic to find and display upcoming birthdays
+    pass
 
 
 def show_all(book: AddressBook) -> str:
