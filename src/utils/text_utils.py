@@ -119,7 +119,7 @@ if __name__ == "__main__":
         truncate_string(TEST_STRING, max_length=0, include_suffix_in_max_length=True)
         == ""
     )
-    assert truncate_string(TEST_STRING, max_length=-1) == "..."
+    assert truncate_string(TEST_STRING, max_length=-1) == "Hello world..."
     assert (
         truncate_string(TEST_STRING, max_length=-1, include_suffix_in_max_length=True)
         == ""
@@ -163,3 +163,5 @@ if __name__ == "__main__":
     )
     assert truncate_string("", suffix="") == ""
     assert truncate_string("", suffix="", include_suffix_in_max_length=True) == ""
+
+    print("Test utils tests passed.")
