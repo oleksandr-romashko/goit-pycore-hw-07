@@ -437,9 +437,9 @@ if __name__ == "__main__":
     try:
         book.delete("alex")
     except ValidationError as exc:
-        assert (
-            str(exc)
-            == "Contact 'alex' not found. However, a contact with a similar name exists as 'Alex'. Did you mean 'Alex'?"
+        assert str(exc) == (
+            "Contact 'alex' not found. However, a contact with a similar "
+            "name exists as 'Alex'. Did you mean 'Alex'?"
         )
     else:
         assert False, "Should raise Validation error"

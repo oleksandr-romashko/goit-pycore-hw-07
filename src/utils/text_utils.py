@@ -32,7 +32,8 @@ def truncate_string(
 
     if not isinstance(max_length, int):
         raise TypeError(
-            f"During truncation expected 'max_length' to be of type 'int' but was '{type(max_length)}'"
+            f"During truncation expected 'max_length' to be of type 'int' "
+            f"but was '{type(max_length)}'"
         )
 
     if not isinstance(suffix, str):

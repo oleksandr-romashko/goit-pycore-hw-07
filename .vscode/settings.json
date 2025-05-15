@@ -4,8 +4,9 @@
     ],
     "python.envFile": "${workspaceFolder}/.env",
     "cSpell.words": [
+        "PYTHONPATH",
+        "dotenv",
         "ERRORLEVEL",
-        "venv",
-        "dotenv"
+        "venv"
     ]
 }
