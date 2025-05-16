@@ -21,4 +21,14 @@ def parse_date(date_str: str) -> date:
 
 def format_date_str(date_obj: date) -> str:
     """Converts a `datetime.date` object into a formatted string."""
-    return date_obj.strftime(DATE_FORMAT)
+    return date.strftime(date_obj, DATE_FORMAT)
+
+
+if __name__ == "__main__":
+    assert is_leap_year(2000) == True
+    assert is_leap_year(2004) == True
+    assert is_leap_year(2001) == False
+
+    assert (format_date_str(date(2000, 1, 1))) == "01.01.2000"
+
+    print("Date utils tests passed.")

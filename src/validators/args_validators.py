@@ -4,7 +4,6 @@ Validators for command-line argument structure before further operations.
 These functions check the number and presence of CLI arguments and types.
 """
 
-from typing import Any
 from datetime import date
 
 from validators.errors import ValidationError
@@ -32,19 +31,19 @@ def validate_args_have_n_arguments(
         raise ValidationError(msg)
 
 
-def validate_argument_type(obj: object, obj_type: Any | tuple) -> None:
+def validate_argument_type(obj: object, obj_type: any) -> None:
     """
     Ensures the provided object is of one of the expected types.
 
     Args:
         obj: The object to check.
-        obj_type: The expected type or tuple of types.
+        obj_type: The expected type or tuple/list of types.
 
     Raises:
         TypeError: If the object's type is incorrect.
     """
     if not isinstance(obj, obj_type):
-        if isinstance(obj_type, tuple):
+        if isinstance(obj_type, (tuple, list)):
             expected = ", ".join([o_type.__name__ for o_type in obj_type])
         else:
             expected = obj_type.__name__

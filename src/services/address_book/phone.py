@@ -48,11 +48,11 @@ if __name__ == "__main__":
     TEST_VALID_PHONE_NUMBER_2 = "0987654321"
     TEST_INVALID_PHONE_NUMBER = "123"
 
-    # Create instance with valid phone number
+    # Test creation of instance with valid phone number
     test_phone_1 = Phone(TEST_VALID_PHONE_NUMBER_1)
     assert test_phone_1.value == TEST_VALID_PHONE_NUMBER_1
 
-    # Create instance with invalid phone number
+    # Test creation of instance with invalid phone number
     try:
         Phone(TEST_INVALID_PHONE_NUMBER)
     except ValidationError as exc:
@@ -67,12 +67,12 @@ if __name__ == "__main__":
             "when creating Phone instance with invalid phone number value"
         )
 
-    # Direct assignment to Phone instance value a valid phone number
+    # Test direct assignment to Phone instance value a valid phone number
     test_phone_2 = Phone(TEST_VALID_PHONE_NUMBER_1)
     test_phone_2.value = TEST_VALID_PHONE_NUMBER_2
     assert test_phone_2.value == TEST_VALID_PHONE_NUMBER_2
 
-    # Direct assignment to Phone instance value an invalid phone number
+    # Test direct assignment to Phone instance value an invalid phone number
     test_phone_3 = Phone(TEST_VALID_PHONE_NUMBER_1)
     try:
         test_phone_3.value = TEST_INVALID_PHONE_NUMBER
@@ -90,12 +90,12 @@ if __name__ == "__main__":
         )
     assert test_phone_3.value == TEST_VALID_PHONE_NUMBER_1
 
-    # Update instance with valid phone number
+    # Test update instance with valid phone number
     test_phone_4 = Phone(TEST_VALID_PHONE_NUMBER_1)
     test_phone_4.update_phone(TEST_VALID_PHONE_NUMBER_2)
     assert test_phone_4.value == TEST_VALID_PHONE_NUMBER_2
 
-    # Update instance with invalid phone number
+    # Test update instance with invalid phone number
     test_phone_5 = Phone(TEST_VALID_PHONE_NUMBER_1)
     try:
         test_phone_5.update_phone(TEST_INVALID_PHONE_NUMBER)

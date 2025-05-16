@@ -6,7 +6,6 @@ It provides basic storage and string conversion behavior.
 """
 
 from dataclasses import dataclass
-from typing import Any
 
 
 @dataclass(repr=False)
@@ -18,7 +17,7 @@ class Field:
     Instances of Field are compared based on their stored value.
     """
 
-    _value: Any
+    _value: any
 
     def __str__(self):
         return str(self.value)
@@ -27,7 +26,7 @@ class Field:
         return f"{self.__class__.__name__}(value={repr(self.value)})"
 
     @property
-    def value(self) -> Any:
+    def value(self) -> any:
         """
         Retrieves the stored value of the field.
 
@@ -41,7 +40,7 @@ class Field:
         return self._value
 
     @value.setter
-    def value(self, value: Any) -> None:
+    def value(self, value: any) -> None:
         self._value = value
 
 
