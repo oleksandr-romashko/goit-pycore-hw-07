@@ -15,7 +15,7 @@ class Name(Field):
     """
     Class for storing and validating contact names.
 
-    Ensures the name is validated on initialization.
+    Ensures the name is validated on initialization and value changes.
     """
 
     def __init__(self, username: str):
@@ -24,15 +24,15 @@ class Name(Field):
         super().__init__(username)
 
     @Field.value.setter
-    def value(self, new_username: str):
+    def value(self, username: str):
         """
         Sets a new validated name value.
 
         Overrides setter from parent adding validation.
         """
-        new_username = new_username.strip()
-        validate_username_length(new_username)
-        self._value = new_username
+        username = username.strip()
+        validate_username_length(username)
+        self._value = username
 
 
 if __name__ == "__main__":

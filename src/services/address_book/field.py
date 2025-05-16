@@ -41,8 +41,8 @@ class Field:
         return self._value
 
     @value.setter
-    def value(self, new_value: Any) -> None:
-        self._value = new_value
+    def value(self, value: Any) -> None:
+        self._value = value
 
 
 if __name__ == "__main__":
@@ -51,16 +51,18 @@ if __name__ == "__main__":
     TEST_VALUE_STR = "some_value"
     TEST_VALUE_DATE = 42
 
-    test_field_str = Field(TEST_VALUE_STR)
-    assert isinstance(test_field_str.value, str)
-    assert str(test_field_str) == TEST_VALUE_STR
-    assert test_field_str == Field(TEST_VALUE_STR)  # __eq__ override test
-    assert repr(test_field_str) == "Field(value='some_value')"  # __repr__ override test
+    test_field_of_str = Field(TEST_VALUE_STR)
+    assert isinstance(test_field_of_str.value, str)
+    assert str(test_field_of_str) == TEST_VALUE_STR
+    assert test_field_of_str == Field(TEST_VALUE_STR)  # __eq__ override test
+    assert (
+        repr(test_field_of_str) == "Field(value='some_value')"
+    )  # __repr__ override test
 
-    test_field_int = Field(TEST_VALUE_DATE)
-    assert isinstance(test_field_int.value, int)
-    assert str(test_field_int) == str(TEST_VALUE_DATE)
-    assert test_field_int == Field(TEST_VALUE_DATE)  # __eq__ override test
-    assert repr(test_field_int) == "Field(value=42)"  # __repr__ override test
+    test_field_of_int = Field(TEST_VALUE_DATE)
+    assert isinstance(test_field_of_int.value, int)
+    assert str(test_field_of_int) == str(TEST_VALUE_DATE)
+    assert test_field_of_int == Field(TEST_VALUE_DATE)  # __eq__ override test
+    assert repr(test_field_of_int) == "Field(value=42)"  # __repr__ override test
 
     print("Field tests passed.")
