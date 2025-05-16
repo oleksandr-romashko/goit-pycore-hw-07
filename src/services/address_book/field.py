@@ -47,15 +47,17 @@ class Field:
 if __name__ == "__main__":
     # TESTS
 
-    TEST_VALUE_1 = "value1"
-    TEST_VALUE_2 = "value2"
+    TEST_VALUE_STR = "value"
+    TEST_VALUE_DATE = 42
 
-    field_1 = Field(TEST_VALUE_1)
-    field_2 = Field(TEST_VALUE_2)
+    test_field_str = Field(TEST_VALUE_STR)
+    assert isinstance(test_field_str.value, str)
+    assert str(test_field_str) == TEST_VALUE_STR
+    assert test_field_str == Field(TEST_VALUE_STR)
 
-    assert str(field_1) == TEST_VALUE_1
-    assert str(field_2) == TEST_VALUE_2
-
-    assert field_1 == Field(TEST_VALUE_1)
+    test_field_date = Field(TEST_VALUE_DATE)
+    assert isinstance(test_field_date.value, int)
+    assert str(test_field_date) == "42"
+    assert test_field_date == Field(TEST_VALUE_DATE)
 
     print("Field tests passed.")
