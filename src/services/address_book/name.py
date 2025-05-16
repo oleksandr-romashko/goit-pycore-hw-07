@@ -27,28 +27,40 @@ class Name(Field):
 if __name__ == "__main__":
     # TESTS
 
-    name_valid_str = "Alice"
-    name_too_short_str = "A"
-    name_too_long_str = "A" * 51
+    TEST_NAME_VALID = "Alice"
+    TEST_NAME_VALID_SHORTEST = "Bc"
+    TEST_NAME_VALID_LONGEST = "D" * 50
+    TEST_NAME_INVALID_TOO_SHORT = "A"
+    TEST_NAME_INVALID_TOO_LONG = "E" * 51
 
-    name_valid = Name(name_valid_str)
+    # Happy path
+    name_valid_short = Name(TEST_NAME_VALID)
 
+    # Shortest possible name
+    name_valid_short = Name(TEST_NAME_VALID_SHORTEST)
+
+    # Longest possible name
+    name_valid_long = Name(TEST_NAME_VALID_LONGEST)
+
+    # Too short name
     try:
-        Name(name_too_short_str)
+        Name(TEST_NAME_INVALID_TOO_SHORT)
     except ValidationError as exc:
-        cause = f"Username '{name_too_short_str}' is too short and should have at least 2 symbols."
-        assert str(exc) == cause
+        TEST_TOO_SHORT_MSG = (
+            f"Username '{TEST_NAME_INVALID_TOO_SHORT}' is too short "
+            "and should have at least 2 symbols."
+        )
+        assert str(exc) == TEST_TOO_SHORT_MSG
     else:
-        cause = "Should raise Validation error when name is too short"
-        assert False, cause
+        assert False, "Should raise Validation error when name is too short"
 
+    # Too long name
     try:
-        Name(name_too_long_str)
+        Name(TEST_NAME_INVALID_TOO_LONG)
     except ValidationError as exc:
-        cause = "Username 'AAAAAAAAAAAA...' is too long and should have not more than 50 symbols."
-        assert str(exc) == cause
+        TEST_TOO_LONG_MSG = "Username 'EEEEEEEEEEEE...' is too long and should have not more than 50 symbols."
+        assert str(exc) == TEST_TOO_LONG_MSG
     else:
-        cause = "Should raise Validation error when name is too short"
-        assert False, cause
+        assert False, "Should raise Validation error when name is too short"
 
     print("Name tests passed.")
