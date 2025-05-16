@@ -27,6 +27,16 @@ class Field:
 
     @property
     def value(self):
+        """
+        Retrieves the stored value of the field.
+
+        This property provides read access to the internal `_value` attribute,
+        which represents the field's content. It is used by subclasses to access
+        or override the behavior of getting a field's value.
+
+        Returns:
+            Any: The current value stored in the field.
+        """
         return self._value
 
     @value.setter
@@ -37,15 +47,15 @@ class Field:
 if __name__ == "__main__":
     # TESTS
 
-    value_1 = "value1"
-    value_2 = "value2"
+    TEST_VALUE_1 = "value1"
+    TEST_VALUE_2 = "value2"
 
-    field_1 = Field(value_1)
-    field_2 = Field(value_2)
+    field_1 = Field(TEST_VALUE_1)
+    field_2 = Field(TEST_VALUE_2)
 
-    assert str(field_1) == value_1
-    assert str(field_2) == value_2
+    assert str(field_1) == TEST_VALUE_1
+    assert str(field_2) == TEST_VALUE_2
 
-    assert field_1 == Field(value_1)
+    assert field_1 == Field(TEST_VALUE_1)
 
     print("Field tests passed.")
