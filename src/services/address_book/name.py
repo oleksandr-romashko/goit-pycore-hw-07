@@ -34,13 +34,13 @@ if __name__ == "__main__":
     TEST_NAME_INVALID_TOO_LONG = "E" * 51
 
     # Happy path
-    name_valid_short = Name(TEST_NAME_VALID)
+    test_name_obj_valid_short = Name(TEST_NAME_VALID)
 
     # Shortest possible name
-    name_valid_short = Name(TEST_NAME_VALID_SHORTEST)
+    test_name_obj_valid_short = Name(TEST_NAME_VALID_SHORTEST)
 
     # Longest possible name
-    name_valid_long = Name(TEST_NAME_VALID_LONGEST)
+    test_name_obj_valid_long = Name(TEST_NAME_VALID_LONGEST)
 
     # Too short name
     try:
