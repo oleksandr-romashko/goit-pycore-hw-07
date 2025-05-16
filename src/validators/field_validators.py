@@ -35,21 +35,21 @@ def validate_username_length(username: str) -> None:
         raise ValidationError("Username cannot be empty or just whitespace.")
 
     if len(username) < NAME_MIN_LENGTH:
-        message_too_short = (
+        err_msg_too_short = (
             f"Username '{username}' is too short "
             f"and should have at least {NAME_MIN_LENGTH} symbols."
         )
-        raise ValidationError(message_too_short)
+        raise ValidationError(err_msg_too_short)
 
     if len(username) > NAME_MAX_LENGTH:
         truncated_username = truncate_string(
             username, max_length=MAX_DISPLAY_NAME_LEN, include_suffix_in_max_length=True
         )
-        message_too_long = (
+        err_msg_too_long = (
             f"Username '{truncated_username}' is too long "
             f"and should have not more than {NAME_MAX_LENGTH} symbols."
         )
-        raise ValidationError(message_too_long)
+        raise ValidationError(err_msg_too_long)
 
 
 def validate_phone_number(phone: str) -> None:
@@ -100,7 +100,7 @@ def validate_birthday_format(value: str) -> date:
 
 def validate_birthday_is_in_the_past(birthday: date) -> None:
     """
-    Validates that the given birthday date passed or today.
+    Validates that the given birthday date passed or is today.
 
     Args:
         birthday (date): A `datetime.date` object representing the birthday.

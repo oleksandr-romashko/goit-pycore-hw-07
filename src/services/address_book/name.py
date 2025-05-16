@@ -23,6 +23,17 @@ class Name(Field):
         validate_username_length(username)
         super().__init__(username)
 
+    @Field.value.setter
+    def value(self, new_username: str):
+        """
+        Sets a new validated name value.
+
+        Overrides setter from parent adding validation.
+        """
+        new_username = new_username.strip()
+        validate_username_length(new_username)
+        self._value = new_username
+
 
 if __name__ == "__main__":
     # TESTS
@@ -30,19 +41,19 @@ if __name__ == "__main__":
     TEST_USERNAME_VALID = "Alice"
     TEST_USERNAME_VALID_SHORTEST = "Bc"
     TEST_USERNAME_VALID_LONGEST = "D" * 50
-    TEST_USERNAME_INVALID_TOO_SHORT = "A"
-    TEST_USERNAME_INVALID_TOO_LONG = "E" * 51
+    TEST_USERNAME_INVALID_TOO_SHORT = "E"
+    TEST_USERNAME_INVALID_TOO_LONG = "F" * 51
 
-    # Happy path
+    # Test happy path
     Name(TEST_USERNAME_VALID)
 
-    # Shortest possible name
+    # Test shortest possible username
     Name(TEST_USERNAME_VALID_SHORTEST)
 
-    # Longest possible name
+    # Test longest possible username
     Name(TEST_USERNAME_VALID_LONGEST)
 
-    # Too short name
+    # Test too short username validation
     try:
         Name(TEST_USERNAME_INVALID_TOO_SHORT)
     except ValidationError as exc:
@@ -54,16 +65,33 @@ if __name__ == "__main__":
     else:
         assert False, "Should raise Validation error when name is too short"
 
-    # Too long name
+    # Test too long username validation
     try:
         Name(TEST_USERNAME_INVALID_TOO_LONG)
     except ValidationError as exc:
         TEST_ERR_MSG_TOO_LONG = (
-            "Username 'EEEEEEEEEEEE...' is too long "
+            "Username 'FFFFFFFFFFFF...' is too long "
             "and should have not more than 50 symbols."
         )
         assert str(exc) == TEST_ERR_MSG_TOO_LONG
     else:
-        assert False, "Should raise Validation error when name is too short"
+        assert False, "Should raise Validation error when name is too long"
+
+    # Test direct name value assignment username validation
+    test_name = Name(TEST_USERNAME_VALID)
+    try:
+        test_name.value = TEST_USERNAME_INVALID_TOO_SHORT
+    except ValidationError as exc:
+        TEST_ERR_MSG_TOO_SHORT_DIRECT_ASSIGNMENT = (
+            f"Username '{TEST_USERNAME_INVALID_TOO_SHORT}' is too short "
+            "and should have at least 2 symbols."
+        )
+        assert str(exc) == TEST_ERR_MSG_TOO_SHORT_DIRECT_ASSIGNMENT
+    else:
+        assert False, (
+            "Should raise Validation error "
+            "when assigning invalid username directly to value field"
+        )
+    assert test_name.value == TEST_USERNAME_VALID
 
     print("Name tests passed.")
