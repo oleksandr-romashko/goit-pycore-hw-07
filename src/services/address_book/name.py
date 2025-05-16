@@ -27,39 +27,42 @@ class Name(Field):
 if __name__ == "__main__":
     # TESTS
 
-    TEST_NAME_VALID = "Alice"
-    TEST_NAME_VALID_SHORTEST = "Bc"
-    TEST_NAME_VALID_LONGEST = "D" * 50
-    TEST_NAME_INVALID_TOO_SHORT = "A"
-    TEST_NAME_INVALID_TOO_LONG = "E" * 51
+    TEST_USERNAME_VALID = "Alice"
+    TEST_USERNAME_VALID_SHORTEST = "Bc"
+    TEST_USERNAME_VALID_LONGEST = "D" * 50
+    TEST_USERNAME_INVALID_TOO_SHORT = "A"
+    TEST_USERNAME_INVALID_TOO_LONG = "E" * 51
 
     # Happy path
-    test_name_obj_valid_short = Name(TEST_NAME_VALID)
+    Name(TEST_USERNAME_VALID)
 
     # Shortest possible name
-    test_name_obj_valid_short = Name(TEST_NAME_VALID_SHORTEST)
+    Name(TEST_USERNAME_VALID_SHORTEST)
 
     # Longest possible name
-    test_name_obj_valid_long = Name(TEST_NAME_VALID_LONGEST)
+    Name(TEST_USERNAME_VALID_LONGEST)
 
     # Too short name
     try:
-        Name(TEST_NAME_INVALID_TOO_SHORT)
+        Name(TEST_USERNAME_INVALID_TOO_SHORT)
     except ValidationError as exc:
-        TEST_TOO_SHORT_MSG = (
-            f"Username '{TEST_NAME_INVALID_TOO_SHORT}' is too short "
+        TEST_ERR_MSG_TOO_SHORT = (
+            f"Username '{TEST_USERNAME_INVALID_TOO_SHORT}' is too short "
             "and should have at least 2 symbols."
         )
-        assert str(exc) == TEST_TOO_SHORT_MSG
+        assert str(exc) == TEST_ERR_MSG_TOO_SHORT
     else:
         assert False, "Should raise Validation error when name is too short"
 
     # Too long name
     try:
-        Name(TEST_NAME_INVALID_TOO_LONG)
+        Name(TEST_USERNAME_INVALID_TOO_LONG)
     except ValidationError as exc:
-        TEST_TOO_LONG_MSG = "Username 'EEEEEEEEEEEE...' is too long and should have not more than 50 symbols."
-        assert str(exc) == TEST_TOO_LONG_MSG
+        TEST_ERR_MSG_TOO_LONG = (
+            "Username 'EEEEEEEEEEEE...' is too long "
+            "and should have not more than 50 symbols."
+        )
+        assert str(exc) == TEST_ERR_MSG_TOO_LONG
     else:
         assert False, "Should raise Validation error when name is too short"
 
