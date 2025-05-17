@@ -88,15 +88,39 @@ def validate_contact_is_in_contacts(username: str, contacts: dict[str, any]) -> 
 
 
 def validate_phone_not_in_contact(phone_number: str, record) -> None:
+    """
+    Ensures the specified phone number is not already present in the contact's phone list.
+
+    Checks for the exact match.
+
+    Args:
+        phone_number (str): Phone number to check.
+        record: Contact record containing a list of phone objects.
+
+    Raises:
+        ValidationError: If the phone number already exists in the contact.
+    """
     for phone_obj in record.phones:
-        # Check for exact match
         if phone_obj.value == phone_number:
             raise ValidationError(MSG_PHONE_EXISTS.format(record.name, phone_number))
 
 
 def validate_phone_is_in_contact(phone_number: str, record) -> tuple[int, Phone]:
+    """
+    Validates that a given phone number exists in the contact and returns its position.
+
+    Args:
+        phone_number (str): Phone number to find.
+        record: Contact record containing a list of phone objects.
+
+    Returns:
+        tuple[int, Phone]: Index and phone object if found.
+
+    Raises:
+        ValidationError: If the phone number is not found.
+    """
     if not record.phones:
-        return None
+        return
 
     for idx, phone in enumerate(record.phones):
         if phone.value == phone_number:
@@ -106,6 +130,16 @@ def validate_phone_is_in_contact(phone_number: str, record) -> tuple[int, Phone]
 
 
 def validate_birthday_duplicate(birthday: date, record):
+    """
+    Checks if the provided birthday is already assigned to the contact.
+
+    Args:
+        birthday (date): Birthday to validate.
+        record: Contact record with an existing birthday.
+
+    Raises:
+        ValidationError: If the birthday is the same as the one already set.
+    """
     if birthday == record.birthday.value:
         username = record.name
         date_str = format_date_str(record.birthday.value)
