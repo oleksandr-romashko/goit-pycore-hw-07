@@ -9,11 +9,11 @@ from datetime import date
 
 from services.address_book.field import Field
 
-from utils.constants import BIRTHDAY_FORMAT_MSG
+from utils.constants import DATE_FORMAT_STR_REPRESENTATION
 from utils.date_utils import format_date_str
 from validators.args_validators import validate_argument_type
 from validators.errors import ValidationError
-from validators.field_validators import validate_birthday_format
+from validators.field_validators import validate_date_format
 
 
 class Birthday(Field):
@@ -44,7 +44,7 @@ class Birthday(Field):
     def _validate_and_parse_date(self, date_value: str | date) -> date:
         validate_argument_type(date_value, (str, date))
         if isinstance(date_value, str):
-            date_value = validate_birthday_format(date_value)
+            date_value = validate_date_format(date_value)
         return date_value
 
 
@@ -75,7 +75,7 @@ if __name__ == "__main__":
     except ValidationError as exc:
         TEST_ERR_MSG_INVALID_DATE_FORMAT_WHEN_INIT = (
             f"Invalid provided date format '{TEST_DATE_STR_WITH_INVALID_FORMAT}'. "
-            f"Use {BIRTHDAY_FORMAT_MSG} format."
+            f"Use {DATE_FORMAT_STR_REPRESENTATION} format."
         )
         assert str(exc) == TEST_ERR_MSG_INVALID_DATE_FORMAT_WHEN_INIT
     else:
@@ -99,7 +99,7 @@ if __name__ == "__main__":
     except ValidationError as exc:
         TEST_ERR_MSG_INVALID_DATE_FORMAT_WHEN_ASSIGN_VALUE = (
             f"Invalid provided date format '{TEST_DATE_STR_WITH_INVALID_FORMAT}'. "
-            f"Use {BIRTHDAY_FORMAT_MSG} format."
+            f"Use {DATE_FORMAT_STR_REPRESENTATION} format."
         )
         assert str(exc) == TEST_ERR_MSG_INVALID_DATE_FORMAT_WHEN_ASSIGN_VALUE
     else:
