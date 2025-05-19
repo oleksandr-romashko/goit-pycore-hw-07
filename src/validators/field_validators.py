@@ -11,7 +11,7 @@ from utils.constants import (
     NAME_MAX_LENGTH,
     MAX_DISPLAY_NAME_LEN,
     PHONE_FORMAT_DESC_STR,
-    BIRTHDAY_FORMAT_MSG,
+    DATE_FORMAT_STR_REPRESENTATION,
 )
 from utils.text_utils import truncate_string
 from utils.date_utils import parse_date, format_date_str
@@ -76,25 +76,25 @@ def validate_phone_number(phone: str) -> None:
         )
 
 
-def validate_birthday_format(value: str) -> date:
+def validate_date_format(value: str) -> date:
     """
-    Validates and parses a birthday string into a date object.
+    Validates and parses a date string into a date object.
 
     Args:
-        value (str): The birthday string to validate, expected in the defined format.
+        value (str): The date string to validate, expected in the defined format.
 
     Returns:
-        date: A `datetime.date` object representing the validated birthday.
+        date: A `datetime.date` object representing the validated date string.
 
     Raises:
         ValidationError: If the input does not match the expected format.
     """
     try:
-        birth_date = parse_date(value)
-        return birth_date
+        date_obj = parse_date(value)
+        return date_obj
     except ValueError as exc:
-        cause = f"Invalid provided date format '{value}'."
-        tip = f"Use {BIRTHDAY_FORMAT_MSG} format."
+        cause = f"Invalid date format '{value}'."
+        tip = f"Use {DATE_FORMAT_STR_REPRESENTATION} format."
         raise ValidationError(f"{cause} {tip}") from exc
 
 

@@ -9,7 +9,7 @@ from datetime import date
 from validators.errors import ValidationError
 
 
-def validate_args_have_n_arguments(
+def ensure_args_have_n_arguments(
     args: list[str], expected: int, details: str = ""
 ) -> None:
     """

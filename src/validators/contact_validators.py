@@ -17,11 +17,26 @@ from utils.date_utils import format_date_str
 MSG_CONTACT_EXISTS = "Contact with username '{0}' already exists"
 MSG_NO_CONTACTS = "You don't have contacts yet, but you can add one anytime."
 MSG_CONTACT_NOT_FOUND = "Contact '{0}' not found"
-MSG_PHONE_EXISTS = "Contact '{0}' has '{1}' phone number already."
+MSG_PHONE_NUMBER_EXISTS = "Contact '{0}' has '{1}' phone number already."
+MSG_PHONE_NUMBER_NOT_FOUND = "Phone number '{0}' for contact '{1}' not found."
 MSG_BIRTHDAY_DUPLICATE = "Birthday for '{0}' is already set to '{1}'."
 
 
-def validate_contact_not_in_contacts(username: str, contacts: dict) -> None:
+def ensure_contacts_storage_not_empty(contacts: dict) -> None:
+    """
+    Ensures that the contacts dictionary is not empty.
+
+    Args:
+        contacts (dict): Dictionary of contacts.
+
+    Raises:
+        ValidationError: If no contacts exist.
+    """
+    if not contacts:
+        raise ValidationError(MSG_NO_CONTACTS)
+
+
+def ensure_contact_not_in_contacts_storage(username: str, contacts: dict) -> None:
     """
     Ensures the contact with the given username does not already exist (case-insensitive).
 
@@ -46,21 +61,9 @@ def validate_contact_not_in_contacts(username: str, contacts: dict) -> None:
             )
 
 
-def validate_contacts_not_empty(contacts: dict) -> None:
-    """
-    Ensures that the contacts dictionary is not empty.
-
-    Args:
-        contacts (dict): Dictionary of contacts.
-
-    Raises:
-        ValidationError: If no contacts exist.
-    """
-    if not contacts:
-        raise ValidationError(MSG_NO_CONTACTS)
-
-
-def validate_contact_is_in_contacts(username: str, contacts: dict[str, any]) -> any:
+def ensure_contact_is_in_contacts_storage(
+    username: str, contacts: dict[str, any]
+) -> any:
     """
     Ensures a contact with the provided username exists, case-insensitively.
 
@@ -87,7 +90,7 @@ def validate_contact_is_in_contacts(username: str, contacts: dict[str, any]) -> 
     return contacts[match]
 
 
-def validate_phone_not_in_contact(phone_number: str, record) -> None:
+def ensure_phone_not_in_contact(phone_number: str, record) -> None:
     """
     Ensures the specified phone number is not already present in the contact's phone list.
 
@@ -102,10 +105,12 @@ def validate_phone_not_in_contact(phone_number: str, record) -> None:
     """
     for phone_obj in record.phones:
         if phone_obj.value == phone_number:
-            raise ValidationError(MSG_PHONE_EXISTS.format(record.name, phone_number))
+            raise ValidationError(
+                MSG_PHONE_NUMBER_EXISTS.format(record.name, phone_number)
+            )
 
 
-def validate_phone_is_in_contact(phone_number: str, record) -> tuple[int, Phone]:
+def ensure_phone_is_in_contact(phone_number: str, record) -> tuple[int, Phone]:
     """
     Validates that a given phone number exists in the contact and returns its position.
 
@@ -120,16 +125,18 @@ def validate_phone_is_in_contact(phone_number: str, record) -> tuple[int, Phone]
         ValidationError: If the phone number is not found.
     """
     if not record.phones:
-        return
+        raise ValidationError(
+            MSG_PHONE_NUMBER_NOT_FOUND.format(phone_number, record.name)
+        )
 
     for idx, phone in enumerate(record.phones):
         if phone.value == phone_number:
             return idx, phone
 
-    raise ValidationError(f"Phone '{phone_number}' not found.")
+    raise ValidationError(MSG_PHONE_NUMBER_NOT_FOUND.format(phone_number, record.name))
 
 
-def validate_birthday_duplicate(birthday: date, record):
+def ensure_birthday_in_contact_not_duplicate(birthday: date, record):
     """
     Checks if the provided birthday is already assigned to the contact.
 
