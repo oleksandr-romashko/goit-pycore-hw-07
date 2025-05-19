@@ -1,107 +1,102 @@
 """
-This module defines the Record class for managing a contact's name and associated phone numbers.
+This module defines the Record class for managing a contact's name,
+phone numbers, and birthday.
 """
-from validators.errors import ValidationError
-
 from services.address_book.birthday import Birthday
 from services.address_book.name import Name
 from services.address_book.phone import Phone
 
-MSG_PHONE_ADDED = "Phone added."
-MSG_PHONE_EXISTS = "Contact '{0}' has '{1}' phone number already."
-MSG_PHONE_UPDATED = "Phone updated."
-MSG_PHONE_DELETED = "Phone deleted."
-MSG_BIRTHDAY_ADDED = "Birthday added."
-MSG_BIRTHDAY_UPDATED = "Birthday updated."
+from validators.errors import ValidationError
+from validators.contact_validators import (
+    ensure_phone_not_in_contact,
+    ensure_phone_is_in_contact,
+    ensure_birthday_in_contact_not_duplicate,
+)
+from validators.field_validators import (
+    validate_date_format,
+    validate_birthday_is_in_the_past,
+)
 
 
 class Record:
     """
-    A class for storing contact information, including the contact's name and a list of phones.
+    A class for storing contact information, including the contact's name,
+    birthday, and phone numbers.
 
     Attributes:
         name (Name): The contact's name (required).
         phones (list[Phone]): A list of phones associated with the contact.
+        birthday (Birthday | None): The contact's birthday if set.
 
-    Functionality:
-        - Add phone numbers.
-        - Remove phone numbers.
-        - Edit existing phone numbers.
-        - Search for a phone number.
+    Methods:
+        - add_phone(phone_number): Adds a new phone.
+        - find_phone(phone_number): Finds and returns a phone.
+        - edit_phone(old, new): Edits an existing phone.
+        - remove_phone(phone_number): Removes a phone.
+        - add_birthday(date): Adds or updates birthday.
     """
 
     def __init__(self, username: str):
-        self.name = Name(username)
+        self.name: Name = Name(username)
+        self.birthday: Birthday | None = None
         self.phones: list[Phone] = []
-        self.birthday = None
 
     def __str__(self):
-        birthday_info = f", birthday: {self.birthday}" if self.birthday else ""
-        return (
-            f"Contact name: {self.name}"
-            f"{birthday_info}"
-            f", phones: {'; '.join(phone.value for phone in self.phones)}"
+        name_info = f"{self.name}"
+        birthday_optional_info = f"birthday: {self.birthday}, " if self.birthday else ""
+        phones_info = (
+            f"phones: {'; '.join(phone.value for phone in self.phones) or 'none'}"
         )
+        return f"{name_info} : {birthday_optional_info}{phones_info}"
 
     def __repr__(self):
         return (
-            f"{self.__class__.__name__}(name='{self.name}, "
-            f"birthday='{self.birthday}, phones={self.phones}')"
+            f"{self.__class__.__name__}(name={repr(self.name)}"
+            f", birthday={repr(self.birthday)}"
+            f", phones={repr(self.phones)})"
         )
 
-    def add_phone(self, phone_number: str) -> str:
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return (
+                self.name == other.name
+                and self.birthday == other.birthday
+                and self.phones == other.phones
+            )
+        return NotImplemented
+
+    def __contains__(self, item):
+        if isinstance(item, Phone):
+            return item in self.phones
+        if isinstance(item, Birthday):
+            return self.birthday == item
+        return False
+
+    def add_phone(self, phone_number: str) -> None:
         """
         Adds a phone number to the record.
 
         Raises:
             ValidationError: If the phone number already exists.
         """
-        if self._find_phone_with_index(phone_number):
-            raise ValidationError(
-                MSG_PHONE_EXISTS.format(self.name.value, phone_number)
-            )
+        ensure_phone_not_in_contact(phone_number, self)
+        new_phone = Phone(phone_number)
+        self.phones.append(new_phone)
 
-        self.phones.append(Phone(phone_number))
-        return MSG_PHONE_ADDED
-
-    def add_birthday(self, date_str: str) -> str:
+    def find_phone(self, phone_number: str) -> Phone:
         """
-        Adds a birthday date to the record.
+        Finds and returns a phone number object from the record.
 
-        If adding birthday is set with other value, updates it.
+        Returns:
+            Phone: The phone object if found.
 
         Raises:
-            ValidationError: If the same birthday date already set.
+            ValidationError: If the phone is not found in the record.
         """
-        if not self.birthday:
-            self.birthday = Birthday(date_str)
-            return MSG_BIRTHDAY_ADDED
+        _, phone = ensure_phone_is_in_contact(phone_number, self)
+        return phone if phone else None
 
-        birthday_update = Birthday(date_str)
-
-        if self.birthday == birthday_update:
-            err_msg = f"Birthday for '{self.name}' is already set to '{date_str}'."
-            raise ValidationError(err_msg)
-
-        self.birthday = birthday_update
-        return MSG_BIRTHDAY_UPDATED
-
-    def remove_phone(self, phone_number: str) -> str:
-        """
-        Removes a phone from the record.
-
-        Raises:
-            ValidationError: If the phone number does not exist.
-        """
-        search_result = self._find_phone_with_index(phone_number)
-        if not search_result:
-            raise ValidationError(f"Phone '{phone_number}' not found.")
-
-        idx, _ = search_result
-        self.phones.pop(idx)
-        return MSG_PHONE_DELETED
-
-    def edit_phone(self, prev_phone_number: str, new_phone_number: str) -> str:
+    def edit_phone(self, prev_phone_number: str, new_phone_number: str) -> None:
         """
         Updates an existing phone with a new phone number.
 
@@ -109,157 +104,213 @@ class Record:
             ValidationError: If the new phone number already exists
             or if the old phone number is not found.
         """
-        if self._find_phone_with_index(new_phone_number):
-            raise ValidationError(f"Phone '{new_phone_number}' already exists.")
-
-        search_result = self._find_phone_with_index(prev_phone_number)
-        if not search_result:
-            raise ValidationError(f"Phone '{prev_phone_number}' not found.")
-
-        _, phone = search_result
+        ensure_phone_not_in_contact(new_phone_number, self)
+        _, phone = ensure_phone_is_in_contact(prev_phone_number, self)
         phone.update_phone(new_phone_number)
-        return MSG_PHONE_UPDATED
 
-    def find_phone(self, phone_number: str) -> Phone | None:
+    def remove_phone(self, phone_number: str) -> None:
         """
-        Finds and returns a phone number object from the record.
+        Removes a phone from the record.
 
-        Returns:
-            Phone: The phone object if found, otherwise None.
+        Raises:
+            ValidationError: If the phone number does not exist.
         """
-        result = self._find_phone_with_index(phone_number)
-        return result[1] if result else None
+        idx, _ = ensure_phone_is_in_contact(phone_number, self)
+        self.phones.pop(idx)
 
-    def _find_phone_with_index(self, phone_number: str) -> tuple[int, Phone]:
+    def add_birthday(self, date: str) -> None:
         """
-        Searches for a phone number and returns its index and object.
+        Adds a birthday date to the record.
 
-        Returns:
-            tuple[int, Phone]: A tuple of the index and phone object if found, otherwise None.
+        If adding birthday is set with other value, updates it.
+
+        Raises:
+            ValidationError: If the new birthday date duplicates the existing one.
         """
-        if not self.phones:
-            return None
+        date_obj = validate_date_format(date)
+        validate_birthday_is_in_the_past(date_obj)
 
-        for idx, phone in enumerate(self.phones):
-            if phone.value == phone_number:
-                return idx, phone
+        new_birthday = Birthday(date_obj)
+
+        if not self.birthday:
+            # Add birthday when record has no birthday
+            self.birthday = new_birthday
+            return
+
+        ensure_birthday_in_contact_not_duplicate(new_birthday.value, self)
+
+        # Update (replace) existing birthday
+        self.birthday = new_birthday
 
 
 if __name__ == "__main__":
     # TESTS
 
-    # Create a Record instance
-    record = Record("Alice")
-    assert record.name.value == "Alice"
-    assert len(record.phones) == 0
-    assert str(record) == "Contact name: Alice, phones: "
+    # Test creation of a Record instance
+    test_record_1 = Record("Alice")
+    assert test_record_1.name.value == "Alice"
+    assert len(test_record_1.phones) == 0
+    assert str(test_record_1) == "Alice : phones: none"
+    assert (
+        repr(test_record_1)
+        == "Record(name=Name(value='Alice'), birthday=None, phones=[])"
+    )
 
-    # Try to create Record instance with empty name
+    # Test try creation of a Record instance with empty name
     try:
-        record = Record("")
+        test_record_1 = Record("")
     except ValidationError as exc:
         assert str(exc) == "Username cannot be empty or just whitespace."
     else:
-        assert False, "Should raise Validation error"
+        assert (
+            False
+        ), "Should raise Validation error when creating record with empty name"
 
-    # Add a phone number
-    result_add = record.add_phone("1234567890")
-    assert result_add == MSG_PHONE_ADDED
-    assert len(record.phones) == 1
-    assert record.phones[0].value == "1234567890"
-    assert str(record) == "Contact name: Alice, phones: 1234567890"
+    # Test add a phone number
+    test_record_1.add_phone("1234567890")
+    assert len(test_record_1.phones) == 1
+    assert Phone("1234567890") in test_record_1
+    assert str(test_record_1) == "Alice : phones: 1234567890"
+    assert repr(test_record_1) == (
+        "Record(name=Name(value='Alice'), "
+        "birthday=None, "
+        "phones=[Phone(value='1234567890')])"
+    )
 
-    # Add another phone number
-    record.add_phone("0987654321")
-    assert len(record.phones) == 2
-    assert record.phones[0].value == "1234567890"
-    assert record.phones[1].value == "0987654321"
-    assert str(record) == "Contact name: Alice, phones: 1234567890; 0987654321"
+    test_record_1.add_phone("0987654321")
+    assert len(test_record_1.phones) == 2
+    assert Phone("1234567890") in test_record_1
+    assert Phone("0987654321") in test_record_1
+    assert str(test_record_1) == "Alice : phones: 1234567890; 0987654321"
+    assert repr(test_record_1) == (
+        "Record(name=Name(value='Alice'), "
+        "birthday=None, "
+        "phones=[Phone(value='1234567890'), Phone(value='0987654321')])"
+    )
 
-    # Find a phone
-    found_phone = record.find_phone("1234567890")
-    assert found_phone is not None
-    assert found_phone.value == "1234567890"
+    # Test find phone
+    TEST_FIND_USERNAME = "Bob"
+    TEST_FIND_PHONE_NUMBER_1 = "1234567890"
+    TEST_FIND_PHONE_NUMBER_2 = "0987654321"
+    TEST_FIND_PHONE_NUMBER_UNKNOWN = "9999999999"
 
-    assert record.find_phone("9999999999") is None
+    test_record_find_phone = Record(TEST_FIND_USERNAME)
+    test_record_find_phone.add_phone(TEST_FIND_PHONE_NUMBER_1)
+    test_record_find_phone.add_phone(TEST_FIND_PHONE_NUMBER_2)
 
-    # Edit a phone
-    result_edit = record.edit_phone("1234567890", "1122334455")
-    assert result_edit == MSG_PHONE_UPDATED
-    assert record.find_phone("1234567890") is None
-    assert record.find_phone("1122334455") is not None
-    assert record.find_phone("1122334455").value == "1122334455"
+    test_found_phone_number_1 = test_record_find_phone.find_phone(
+        TEST_FIND_PHONE_NUMBER_1
+    )
+    assert test_found_phone_number_1 is not None
+    assert test_found_phone_number_1.value == TEST_FIND_PHONE_NUMBER_1
 
-    try:
-        record.edit_phone("1234567890", "8888888888")
-    except ValidationError as exc:
-        assert str(exc) == "Phone '1234567890' not found."
-    else:
-        assert False, "Should raise Validation error"
-
-    try:
-        record.edit_phone("1122334455", "0987654321")
-    except ValidationError as exc:
-        assert str(exc) == "Phone '0987654321' already exists."
-    else:
-        assert False, "Should raise Validation error"
-
-    # Remove a phone
-    result_remove_1 = record.remove_phone("0987654321")
-    assert result_remove_1 == MSG_PHONE_DELETED
-    assert len(record.phones) == 1
-    assert record.phones[0].value == "1122334455"
-    assert str(record) == "Contact name: Alice, phones: 1122334455"
+    test_found_phone_number_2 = test_record_find_phone.find_phone(
+        TEST_FIND_PHONE_NUMBER_2
+    )
+    assert test_found_phone_number_2 is not None
+    assert test_found_phone_number_2.value == TEST_FIND_PHONE_NUMBER_2
 
     try:
-        record.remove_phone("0000000000")
+        test_record_find_phone.find_phone(TEST_FIND_PHONE_NUMBER_UNKNOWN)
     except ValidationError as exc:
-        assert str(exc) == "Phone '0000000000' not found."
-    else:
-        assert False, "Should raise Validation error"
-
-    # Find phone with index
-    phone_1 = "1234567890"
-    phone_2 = "0987654321"
-
-    record_2 = Record("Alex")
-    record_2.add_phone(phone_1)
-    record_2.add_phone(phone_2)
-    assert record_2.phones[0].value == phone_1
-    assert record_2.phones[1].value == phone_2
-
-    # Add birthday
-    birthday_username = "Mike"
-    birthday_str = "05.05.2005"
-    updated_birthday_str = "06.06.2006"
-
-    birthday = Birthday(birthday_str)
-    updated_birthday = Birthday(updated_birthday_str)
-
-    record_birthday = Record(birthday_username)
-    assert record_birthday.birthday is None
-    assert str(record_birthday) == f"Contact name: {birthday_username}, phones: "
-
-    birthday_add_result = record_birthday.add_birthday(birthday_str)
-    assert birthday_add_result == MSG_BIRTHDAY_ADDED
-    assert record_birthday.birthday == birthday
-
-    try:
-        record_birthday.add_birthday(birthday_str)
-    except ValidationError as exc:
-        error_msg = (
-            f"Birthday for '{birthday_username}' is already set to '{birthday_str}'."
+        assert str(exc) == (
+            f"Phone number '{TEST_FIND_PHONE_NUMBER_UNKNOWN}' "
+            f"for contact '{TEST_FIND_USERNAME}' not found."
         )
-        assert str(exc) == error_msg
     else:
-        cause = (
-            "Should raise Validation error when the same birthday date is set already."
-        )
-        assert False, cause
-    assert record_birthday.birthday == birthday
+        assert False, "Should raise Validation error when phone number not found"
 
-    birthday_update_result = record_birthday.add_birthday(updated_birthday_str)
-    assert birthday_update_result == MSG_BIRTHDAY_UPDATED
-    assert record_birthday.birthday == updated_birthday
+    # Test edit a phone
+    TEST_EDIT_USERNAME = "Charlie"
+    TEST_EDIT_PHONE_NUMBER_1 = "1111111111"
+    TEST_EDIT_PHONE_NUMBER_2 = "2222222222"
+    TEST_EDIT_PHONE_NUMBER_3 = "3333333333"
+    TEST_EDIT_PHONE_NUMBER_4 = "4444444444"
+    TEST_EDIT_PHONE_NUMBER_UNKNOWN = "9999999999"
+
+    test_record_edit = Record(TEST_EDIT_USERNAME)
+    test_record_edit.add_phone(TEST_EDIT_PHONE_NUMBER_1)
+    test_record_edit.add_phone(TEST_EDIT_PHONE_NUMBER_2)
+
+    test_record_edit.edit_phone(TEST_EDIT_PHONE_NUMBER_1, TEST_EDIT_PHONE_NUMBER_3)
+    assert Phone(TEST_EDIT_PHONE_NUMBER_3) in test_record_edit
+
+    try:
+        test_record_edit.edit_phone(
+            TEST_EDIT_PHONE_NUMBER_UNKNOWN, TEST_EDIT_PHONE_NUMBER_4
+        )
+    except ValidationError as exc:
+        assert str(exc) == (
+            f"Phone number '{TEST_EDIT_PHONE_NUMBER_UNKNOWN}' "
+            f"for contact '{TEST_EDIT_USERNAME}' not found."
+        )
+    else:
+        assert False, "Should raise Validation error when old phone number not found"
+
+    try:
+        test_record_edit.edit_phone(TEST_EDIT_PHONE_NUMBER_2, TEST_EDIT_PHONE_NUMBER_3)
+    except ValidationError as exc:
+        assert str(exc) == (
+            f"Contact '{TEST_EDIT_USERNAME}' "
+            f"has '{TEST_EDIT_PHONE_NUMBER_3}' phone number already."
+        )
+    else:
+        assert False, "Should raise Validation error when new phone already exists"
+
+    # Test remove a phone
+    TEST_REMOVE_USERNAME = "Denis"
+    TEST_REMOVE_PHONE_NUMBER_1 = "1111111111"
+    TEST_REMOVE_PHONE_NUMBER_2 = "2222222222"
+    TEST_REMOVE_PHONE_NUMBER_UNKNOWN = "9999999999"
+
+    test_record_remove = Record(TEST_REMOVE_USERNAME)
+    test_record_remove.add_phone(TEST_REMOVE_PHONE_NUMBER_1)
+    test_record_remove.add_phone(TEST_REMOVE_PHONE_NUMBER_2)
+
+    assert len(test_record_remove.phones) == 2
+    test_record_remove.remove_phone(TEST_REMOVE_PHONE_NUMBER_1)
+    assert len(test_record_remove.phones) == 1
+    assert test_record_remove.phones[0].value == TEST_REMOVE_PHONE_NUMBER_2
+
+    try:
+        test_record_remove.remove_phone(TEST_REMOVE_PHONE_NUMBER_UNKNOWN)
+    except ValidationError as exc:
+        assert str(exc) == (
+            f"Phone number '{TEST_REMOVE_PHONE_NUMBER_UNKNOWN}' "
+            f"for contact '{TEST_REMOVE_USERNAME}' not found."
+        )
+    else:
+        assert (
+            False
+        ), "Should raise Validation error when try to delete non existing phone number"
+
+    # Test add birthday
+    TEST_BIRTHDAY_USERNAME = "Mike"
+    TEST_BIRTHDAY_DATE_STR = "05.05.2005"
+    TEST_BIRTHDAY_DATE_STR_UPDATE = "06.06.2006"
+
+    test_birthday = Birthday(TEST_BIRTHDAY_DATE_STR)
+    test_birthday_updated = Birthday(TEST_BIRTHDAY_DATE_STR_UPDATE)
+
+    test_record_birthday = Record(TEST_BIRTHDAY_USERNAME)
+    assert test_record_birthday.birthday is None
+    assert str(test_record_birthday) == f"{TEST_BIRTHDAY_USERNAME} : phones: none"
+
+    test_record_birthday.add_birthday(TEST_BIRTHDAY_DATE_STR)
+    assert test_birthday in test_record_birthday
+
+    try:
+        test_record_birthday.add_birthday(TEST_BIRTHDAY_DATE_STR)
+    except ValidationError as exc:
+        TEST_ERR_MSG_BIRTHDAY_DUPLICATE = f"Birthday for '{TEST_BIRTHDAY_USERNAME}' is already set to '{TEST_BIRTHDAY_DATE_STR}'."
+        assert str(exc) == TEST_ERR_MSG_BIRTHDAY_DUPLICATE
+    else:
+        assert (
+            False
+        ), "Should raise Validation error when the same birthday date is set already."
+    assert test_birthday in test_record_birthday
+
+    test_record_birthday.add_birthday(TEST_BIRTHDAY_DATE_STR_UPDATE)
+    assert test_birthday_updated in test_record_birthday
 
     print("Record tests passed.")
