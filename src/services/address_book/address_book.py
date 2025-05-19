@@ -12,17 +12,15 @@ from collections import UserDict
 from services.address_book.record import Record
 
 from utils.date_utils import is_leap_year, parse_date, format_date_str
+from utils.text_utils import format_text_output
 from validators.errors import ValidationError
 from validators.args_validators import validate_argument_type
 from validators.contact_validators import (
-    validate_contacts_not_empty,
-    validate_contact_not_in_contacts,
-    validate_contact_is_in_contacts,
+    ensure_contacts_storage_not_empty,
+    ensure_contact_not_in_contacts_storage,
+    ensure_contact_is_in_contacts_storage,
 )
 
-MSG_CONTACT_ADDED = "Contact added."
-MSG_CONTACT_DELETED = "Contact deleted."
-MSG_NO_MATCHES = "No matches found."
 MSG_HAVE_CONTACTS = "You have {0} contact{1}"
 MSG_FOUND_MATCHES = "Found {0} match{1}"
 
@@ -48,16 +46,26 @@ class AddressBook(UserDict):
         Raises:
             ValidationError: If the address book is empty.
         """
-        validate_contacts_not_empty(self.data)
+        ensure_contacts_storage_not_empty(self.data)
 
-        # Format output with title
+        # Format output with header and aligned lines
         count = len(self.data)
         suffix = "" if count == 1 else "s"
-        title = f"{MSG_HAVE_CONTACTS.format(count, suffix)}"
-        contact_lines = self._format_records(self.data.values())
-        output = f"{title}:\n{'\n'.join(contact_lines)}"
+        header = f"{MSG_HAVE_CONTACTS.format(count, suffix)}"
 
-        return output
+        line_items = []
+        for record in self.data.values():
+            title = record.name.value
+            birthday = (
+                f"birthday {format_date_str(record.birthday.value)}, "
+                if record.birthday
+                else ""
+            )
+            phones = f"phones {'; '.join(phone.value for phone in record.phones)}"
+            value = f"{birthday}{phones}"
+            line_items.append((title, value))
+
+        return format_text_output(header, line_items)
 
     def add_record(self, contact: Record) -> str:
         """
@@ -75,10 +83,10 @@ class AddressBook(UserDict):
         validate_argument_type(contact, Record)
 
         # Prevent from overwriting existing entities
-        validate_contact_not_in_contacts(contact.name.value, self.data)
+        ensure_contact_not_in_contacts_storage(contact.name.value, self.data)
 
-        self.data[contact.name.value] = contact
-        return MSG_CONTACT_ADDED
+        username = contact.name.value
+        self.data[username] = contact
 
     def find(self, username: str) -> Record:
         """
@@ -93,11 +101,11 @@ class AddressBook(UserDict):
         Returns:
             Record: The matching contact.
         """
-        validate_contacts_not_empty(self.data)
-        contact = validate_contact_is_in_contacts(username, self.data)
+        ensure_contacts_storage_not_empty(self.data)
+        contact = ensure_contact_is_in_contacts_storage(username, self.data)
         return contact
 
-    def find_match(self, search_term: str = "") -> str:
+    def find_match(self, search_term: str = "") -> list[Record]:
         """
         Searches for contacts by name or phone number.
 
@@ -110,37 +118,29 @@ class AddressBook(UserDict):
         Returns:
             str: A formatted list of matches or a no matches message.
         """
-        validate_contacts_not_empty(self)
+        ensure_contacts_storage_not_empty(self)
 
         matches = []
 
         if not search_term:
             matches = list(self.data.values())
         else:
-            for username, record in self.data.items():
-                if search_term.lower() in username.lower():
+            for record in self.data.values():
+                if search_term.lower() in record.name.value.lower():
+                    # Full match, case insensitive
                     matches.append(record)
                 else:
-                    if any(search_term in phone.value for phone in record.phones):
+                    # Partial match, case insensitive
+                    if any(
+                        search_term.lower() in phone.value.lower()
+                        for phone in record.phones
+                    ):
                         matches.append(record)
 
         if not matches:
-            return MSG_NO_MATCHES
+            return []
 
-        # Sort found matches alphabetically by name
-        matches.sort(key=lambda record: record.name.value.lower())
-
-        # Create aligned contacts output
-        contact_lines = self._format_records(matches)
-
-        # Format output with title
-        count = len(matches)
-        suffix = "" if count == 1 else "es"
-        search_prompt = f"'{search_term}'" if search_term else "empty search"
-        title = f"{MSG_FOUND_MATCHES.format(count, suffix)} for {search_prompt}"
-        output = f"{title}:\n{'\n'.join(contact_lines)}"
-
-        return output
+        return matches
 
     def delete(self, username: str) -> str:
         """
@@ -155,10 +155,9 @@ class AddressBook(UserDict):
         Returns:
             str: A message confirming deletion.
         """
-        validate_contact_is_in_contacts(username, self.data)
+        ensure_contact_is_in_contacts_storage(username, self.data)
 
         self.data.pop(username)
-        return MSG_CONTACT_DELETED
 
     def get_upcoming_birthdays(
         self, today: str = None, upcoming_period_days: int = 7
@@ -191,7 +190,7 @@ class AddressBook(UserDict):
             # Retrieve birthday object
             birthday = record.birthday
 
-            # Guard records without birthdays assigned
+            # Guard records without assigned birthday
             if not birthday:
                 continue
 
@@ -230,19 +229,17 @@ class AddressBook(UserDict):
                     )
 
             # Filter dates in upcoming period range and add them to the congratulations list
-            if (
-                today_obj
-                <= congratulation_date
-                <= today_obj + timedelta(upcoming_period_days)
-            ):
-
-                # Shift weekend congratulation to the following Monday
-                if congratulation_date.weekday() == 5:  # Saturday
+            from_date = today_obj
+            till_date = today_obj + timedelta(upcoming_period_days)
+            is_in_upcoming_rage = from_date <= congratulation_date <= till_date
+            if is_in_upcoming_rage:
+                # Move weekend congratulation to the following Monday
+                if congratulation_date.weekday() == 5:  # Saturday moved to Monday
                     congratulation_date += timedelta(days=2)
-                elif congratulation_date.weekday() == 6:  # Sunday
+                elif congratulation_date.weekday() == 6:  # Sunday moved to Monday
                     congratulation_date += timedelta(days=1)
 
-                # Add congratulation to the list
+                # Add congratulation date object to the list
                 user_congratulations.append(
                     {
                         "name": record.name.value,
@@ -259,85 +256,73 @@ class AddressBook(UserDict):
 
         return user_congratulations
 
-    def _format_records(self, records: list[Record], offset: str = "  ") -> list[str]:
-        max_len = max(len(record.name.value) for record in records)
-        return [
-            (
-                f"{offset}{record.name.value.ljust(max_len)} : "
-                f"{'; '.join(phone.value for phone in record.phones)}"
-            )
-            for record in records
-        ]
-
 
 if __name__ == "__main__":
     # Basic tests to verify AddressBook logic
 
     # Setup
-    record_1 = Record("Alice")
-    record_1.add_phone("1234567890")
 
-    record_2 = Record("Bob")
-    record_2.add_phone("9876543210")
-    record_2.add_phone("7233232321")
+    test_book = AddressBook()
+    assert len(test_book.data) == 0
 
-    record_3 = Record("Alex")
-    record_3.add_phone("9875554446")
+    test_record_1 = Record("Alice")
+    test_record_1.add_phone("1234567890")
 
-    record_empty = Record("NoPhone")
+    test_record_2 = Record("Bob")
+    test_record_2.add_phone("9876543210")
+    test_record_2.add_phone("7233232321")
 
-    # Create book instance
-    book = AddressBook()
-    assert len(book.data) == 0
+    test_record_3 = Record("Alex")
+    test_record_3.add_phone("9875554446")
+
+    test_record_empty = Record("NoPhone")
 
     # Test __str__ with 0 records
-    book_str_0_contacts_msg = (
+    TEST_BOOK_STR_NO_CONTACTS = (
         "You don't have contacts yet, but you can add one anytime."
     )
     try:
-        str(book)
+        str(test_book)
     except ValidationError as exc:
-        assert str(exc) == book_str_0_contacts_msg
+        assert str(exc) == TEST_BOOK_STR_NO_CONTACTS
     else:
         assert False, "Should raise Validation error"
 
     # Test add contact - incorrect type
     try:
-        result_add_incorrect_type = book.add_record(object())
+        test_book.add_record(object())
     except TypeError as exc:
-        incorrect_type_msg = "Expected type 'Record', but received type 'object'."
-        assert str(exc) == incorrect_type_msg
+        assert str(exc) == "Expected type 'Record', but received type 'object'."
     else:
         assert False, "Should raise TypeError error when incorrect type"
-    assert len(book.data) == 0
+    assert len(test_book.data) == 0
 
     # Test add contact - first contact
-    result_add_1 = book.add_record(record_1)
-    assert result_add_1 == MSG_CONTACT_ADDED
-    assert len(book.data) == 1
+    test_book.add_record(test_record_1)
+    assert len(test_book.data) == 1
 
     # Test __str__ with 1 record
-    book_str_1_contact_msg = "You have 1 contact:\n  Alice : 1234567890"
-    assert str(book) == book_str_1_contact_msg
+    TEST_MSG_BOOK_STR_1_CONTACT = "You have 1 contact:\n  Alice : phones 1234567890"
+    assert str(test_book) == TEST_MSG_BOOK_STR_1_CONTACT
 
     # Test add contact - second contact
-    book.add_record(record_2)
-    assert len(book.data) == 2
+    test_book.add_record(test_record_2)
+    assert len(test_book.data) == 2
 
     # Test __str__ with 2 records
-    book_str_2_contacts_msg = (
+    TEST_MSG_BOOK_STR_2_CONTACTS = (
         "You have 2 contacts:\n"
-        "  Alice : 1234567890\n"
-        "  Bob   : 9876543210; 7233232321"
+        "  Alice : phones 1234567890\n"
+        "  Bob   : phones 9876543210; 7233232321"
     )
-    assert str(book) == book_str_2_contacts_msg
+    assert str(test_book) == TEST_MSG_BOOK_STR_2_CONTACTS
 
     # Test add contact - record with empty phones as third contact
-    book.add_record(record_empty)
-    assert len(book.data) == 3
+    test_book.add_record(test_record_empty)
+    assert len(test_book.data) == 3
 
     # Test __str__ with 3 records
-    book_str_3_contacts_msg = (
+    TEST_MSG_BOOK_STR_3_CONTACTS = (
         "You have 3 contacts:\n"
         "  Alice   : 1234567890\n"
         "  Bob     : 9876543210; 7233232321\n"
@@ -346,96 +331,172 @@ if __name__ == "__main__":
 
     # Test add contact - add existing contact
     try:
-        book.add_record(record_2)
+        test_book.add_record(test_record_2)
     except ValidationError as exc:
-        contact_already_exists_msg = "Contact with username 'Bob' already exists."
-        assert str(exc) == contact_already_exists_msg
+        TEST_MSG_CONTACT_ALREADY_EXISTS = "Contact with username 'Bob' already exists."
+        assert str(exc) == TEST_MSG_CONTACT_ALREADY_EXISTS
     else:
         assert False, "Should raise Validation error"
-    assert len(book.data) == 3
+    assert len(test_book.data) == 3
 
     # Test find - found contact
-    found_contact = book.find("Alice")
-    assert found_contact.name.value == "Alice"
-    assert found_contact.phones == record_1.phones
+    TEST_FIND_USERNAME = "Alice"
+    TEST_USERNAME_PHONE = "1234567890"
+    found_contact = test_book.find(TEST_FIND_USERNAME)
+    assert found_contact
+    assert found_contact.name.value == TEST_FIND_USERNAME
+    assert len(found_contact.phones) == 1
+    assert found_contact.phones[0].value == TEST_USERNAME_PHONE
 
     # Test find - contact not found
     try:
-        book.find("Unknown_name")
+        test_book.find("Unknown_name")
     except ValidationError as exc:
-        not_found_msg = "Contact 'Unknown_name' not found."
-        assert str(exc) == not_found_msg
+        TEST_MSG_CONTACT_NOT_FOUND = "Contact 'Unknown_name' not found."
+        assert str(exc) == TEST_MSG_CONTACT_NOT_FOUND
     else:
         assert False, "Should raise Validation error"
 
     # Test find match - search for username match
     # single result
-    match_username_term = "Al"
-    match_username_msg = (
-        f"{MSG_FOUND_MATCHES.format(1, '')} for '{match_username_term}':\n"
-        "  Alice : 1234567890"
-    )
-    match_username_result = book.find_match(match_username_term)
-    assert match_username_result == match_username_msg
+    test_match_book_1 = AddressBook()
+
+    TEST_MATCH_USERNAME_TERM = "aL"
+
+    TEST_MATCH_USERNAME_1 = "Alex"
+    TEST_MATCH_PHONE_NUMBER_1 = "9875554446"
+    test_match_record_1 = Record(TEST_MATCH_USERNAME_1)
+    test_match_record_1.add_phone(TEST_MATCH_PHONE_NUMBER_1)
+    test_match_book_1.add_record(test_match_record_1)
+
+    test_match_username_result = test_match_book_1.find_match(TEST_MATCH_USERNAME_TERM)
+    assert len(test_match_username_result) == 1
+    assert test_match_record_1 in test_match_username_result
+
     # multiple results
-    book.add_record(record_3)
-    match_username_msg = (
-        f"{MSG_FOUND_MATCHES.format(2, 'es')} for '{match_username_term}':\n"
+    test_match_book_2 = AddressBook()
+
+    TEST_MATCH_USERNAME_2 = "Alice"
+    TEST_MATCH_PHONE_NUMBER_2 = "1234567890"
+    test_match_record_2 = Record(TEST_MATCH_USERNAME_2)
+    test_match_record_2.add_phone(TEST_MATCH_PHONE_NUMBER_2)
+
+    TEST_MATCH_USERNAME_3 = "Bob"
+    TEST_MATCH_PHONE_NUMBER_3 = "7233232321"
+    test_match_record_3 = Record(TEST_MATCH_USERNAME_3)
+    test_match_record_3.add_phone(TEST_MATCH_PHONE_NUMBER_3)
+
+    test_match_book_2.add_record(test_match_record_1)
+    test_match_book_2.add_record(test_match_record_2)
+    test_match_book_2.add_record(test_match_record_3)
+
+    TEST_MATCH_OUTPUT_TEXT = (
+        f"{MSG_FOUND_MATCHES.format(2, 'es')} for '{TEST_MATCH_USERNAME_TERM}':\n"
         "  Alex  : 9875554446\n"
         "  Alice : 1234567890"
     )
-    match_username_result = book.find_match(match_username_term)
-    assert match_username_result == match_username_msg
+    test_match_username_result = test_match_book_2.find_match(TEST_MATCH_USERNAME_TERM)
+    assert len(test_match_username_result) == 2
+    assert test_match_record_1 in test_match_username_result
+    assert test_match_record_2 in test_match_username_result
+    assert test_match_record_3 not in test_match_username_result
 
     # Test find match - search for phone number match
+    test_match_book = AddressBook()
+
+    test_match_record_1 = Record("Alice")
+    test_match_record_1.add_phone("1234567890")
+
+    test_match_record_2 = Record("Bob")
+    test_match_record_2.add_phone("9876543210")
+    test_match_record_2.add_phone("7233232321")
+
+    test_match_record_3 = Record("Alex")
+    test_match_record_3.add_phone("9875554446")
+
+    test_match_record_4 = Record("NoPhone")
+
+    test_match_book.add_record(test_match_record_1)
+    test_match_book.add_record(test_match_record_2)
+    test_match_book.add_record(test_match_record_3)
+    test_match_book.add_record(test_match_record_4)
+
     # single result
-    match_phone_single_term = "876"
-    match_phone_number_msg_1 = (
-        f"{MSG_FOUND_MATCHES.format(1, '')} for '{match_phone_single_term}':\n"
-        "  Bob : 9876543210; 7233232321"
+    TEST_MATCH_PHONE_SEARCH_TERM_1 = "876"
+    test_match_phone_result_1 = test_match_book.find_match(
+        TEST_MATCH_PHONE_SEARCH_TERM_1
     )
-    match_phone_result = book.find_match(match_phone_single_term)
-    assert match_phone_result == match_phone_number_msg_1
+    assert len(test_match_phone_result_1) == 1
+    assert any(
+        [
+            TEST_MATCH_PHONE_SEARCH_TERM_1 in phone.value
+            for phone in test_match_phone_result_1[0].phones
+        ]
+    )
     # multiple results
-    match_phone_multiple_term = "987"
-    match_phone_number_msg_2 = (
-        f"{MSG_FOUND_MATCHES.format(2, 'es')} for '{match_phone_multiple_term}':\n"
-        "  Alex : 9875554446\n"
-        "  Bob  : 9876543210; 7233232321"
+    TEST_MATCH_PHONE_SEARCH_TERM_2 = "987"
+    test_match_phone_result_2 = test_match_book.find_match(
+        TEST_MATCH_PHONE_SEARCH_TERM_2
     )
-    match_phone_result = book.find_match(match_phone_multiple_term)
-    assert match_phone_result == match_phone_number_msg_2
+    assert len(test_match_phone_result_2) == 2
+    assert any(
+        [
+            TEST_MATCH_PHONE_SEARCH_TERM_1 in phone.value
+            for phone in test_match_phone_result_2[0].phones
+        ]
+    )
+    assert any(
+        [
+            TEST_MATCH_PHONE_SEARCH_TERM_2 in phone.value
+            for phone in test_match_phone_result_2[1].phones
+        ]
+    )
 
     # Test find match - no matches
-    match_unknown_term = "unknown"
-    match_unknown_number_msg = MSG_NO_MATCHES
-    match_unknown_result = book.find_match(match_unknown_term)
-    assert match_unknown_result == match_unknown_number_msg
+    TEST_MATCH_PHONE_SEARCH_TERM_UNKNOWN = "unknown"
+    test_match_unknown_result = test_match_book.find_match(
+        TEST_MATCH_PHONE_SEARCH_TERM_UNKNOWN
+    )
+    assert not test_match_unknown_result
 
     # Test find match - empty term
-    match_empty_term = ""
-    match_empty_term_msg = (
-        "Found 4 matches for empty search:\n"
-        "  Alex    : 9875554446\n"
-        "  Alice   : 1234567890\n"
-        "  Bob     : 9876543210; 7233232321\n"
-        "  NoPhone : "
+    TEST_MATCH_PHONE_SEARCH_TERM_EMPTY = ""
+    test_match_empty_result = test_match_book.find_match(
+        TEST_MATCH_PHONE_SEARCH_TERM_EMPTY
     )
-    match_empty_result = book.find_match(match_empty_term)
-    assert match_empty_result == match_empty_term_msg
+    assert len(test_match_empty_result) == 4
 
     # Test delete contact
-    assert len(book.data) == 4
+    test_delete_book = AddressBook()
+
+    test_delete_record_1 = Record("Alice")
+    test_delete_record_1.add_phone("1234567890")
+
+    test_delete_record_2 = Record("Bob")
+    test_delete_record_2.add_phone("9876543210")
+    test_delete_record_2.add_phone("7233232321")
+
+    test_delete_record_3 = Record("Alex")
+    test_delete_record_3.add_phone("9875554446")
+
+    test_delete_record_4 = Record("NoPhone")
+
+    test_delete_book.add_record(test_match_record_1)
+    test_delete_book.add_record(test_match_record_2)
+    test_delete_book.add_record(test_match_record_3)
+    test_delete_book.add_record(test_match_record_4)
+
+    assert len(test_delete_book.data) == 4
     try:
-        book.delete("unknown_when_with_contacts")
+        test_delete_book.delete("unknown_when_with_contacts")
     except ValidationError as exc:
         assert str(exc) == "Contact 'unknown_when_with_contacts' not found."
     else:
         assert False, "Should raise Validation error"
-    assert len(book.data) == 4
+    assert len(test_delete_book.data) == 4
 
     try:
-        book.delete("alex")
+        test_delete_book.delete("alex")
     except ValidationError as exc:
         assert str(exc) == (
             "Contact 'alex' not found. However, a contact with a similar "
@@ -443,52 +504,48 @@ if __name__ == "__main__":
         )
     else:
         assert False, "Should raise Validation error"
-    assert len(book.data) == 4
+    assert len(test_delete_book.data) == 4
 
     try:
-        book.delete("     Alex   ")
+        test_delete_book.delete("     Alex   ")
     except ValidationError as exc:
         assert str(exc) == "Contact '     Alex   ' not found."
     else:
         assert False, "Should raise Validation error"
-    assert len(book.data) == 4
+    assert len(test_delete_book.data) == 4
 
-    result_delete_1 = book.delete("Alex")
-    assert result_delete_1 == MSG_CONTACT_DELETED
-    assert "Alex" not in book.data
-    assert len(book.data) == 3
+    test_delete_book.delete("Alex")
+    assert "Alex" not in test_delete_book.data
+    assert len(test_delete_book.data) == 3
 
-    result_delete_2 = book.delete("Alice")
-    assert result_delete_2 == MSG_CONTACT_DELETED
-    assert "Alice" not in book.data
-    assert len(book.data) == 2
+    test_delete_book.delete("Alice")
+    assert "Alice" not in test_delete_book.data
+    assert len(test_delete_book.data) == 2
 
-    result_delete_3 = book.delete("Bob")
-    assert result_delete_3 == MSG_CONTACT_DELETED
-    assert "Bob" not in book.data
-    assert len(book.data) == 1
+    test_delete_book.delete("Bob")
+    assert "Bob" not in test_delete_book.data
+    assert len(test_delete_book.data) == 1
 
-    result_delete_4 = book.delete("NoPhone")
-    assert result_delete_4 == MSG_CONTACT_DELETED
-    assert "NoPhone" not in book.data
-    assert len(book.data) == 0
+    test_delete_book.delete("NoPhone")
+    assert "NoPhone" not in test_delete_book.data
+    assert len(test_delete_book.data) == 0
 
     try:
-        book.delete("unknown_when_no_contacts")
+        test_delete_book.delete("unknown_when_no_contacts")
     except ValidationError as exc:
         assert str(exc) == "Contact 'unknown_when_no_contacts' not found."
     else:
         assert False, "Should raise Validation error"
-    assert len(book.data) == 0
+    assert len(test_delete_book.data) == 0
 
     # Test __str__ with 0 records after all have been deleted
-    book_str_0_contacts_after_deletion_msg = (
+    TEST_MSG_BOOK_STR_NO_CONTACTS_AFTER_DELETION = (
         "You don't have contacts yet, but you can add one anytime."
     )
     try:
-        str(book)
+        str(test_delete_book)
     except ValidationError as exc:
-        assert str(exc) == book_str_0_contacts_after_deletion_msg
+        assert str(exc) == TEST_MSG_BOOK_STR_NO_CONTACTS_AFTER_DELETION
     else:
         assert False, "Should raise Validation error"
 
