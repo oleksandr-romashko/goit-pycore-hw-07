@@ -11,7 +11,7 @@ from collections import UserDict
 
 from services.address_book.record import Record
 
-from utils.date_utils import is_leap_year, parse_date, format_date_str
+from utils.date_utils import is_leap_year, parse_date
 from utils.text_utils import format_text_output
 from validators.errors import ValidationError
 from validators.args_validators import validate_argument_type
@@ -56,18 +56,17 @@ class AddressBook(UserDict):
         line_items = []
         for record in self.data.values():
             title = record.name.value
-            birthday = (
-                f"birthday {format_date_str(record.birthday.value)}, "
-                if record.birthday
-                else ""
-            )
+            birthday = f"birthday {str(record.birthday)}, " if record.birthday else ""
             phones = f"phones {'; '.join(phone.value for phone in record.phones)}"
             value = f"{birthday}{phones}"
             line_items.append((title, value))
 
+        # Sort by name (case-insensitive)
+        line_items = sorted(line_items, key=lambda item: item[0].casefold())
+
         return format_text_output(header, line_items)
 
-    def add_record(self, contact: Record) -> str:
+    def add_record(self, contact: Record) -> None:
         """
         Adds a new contact record to the address book.
 
@@ -126,13 +125,13 @@ class AddressBook(UserDict):
             matches = list(self.data.values())
         else:
             for record in self.data.values():
-                if search_term.lower() in record.name.value.lower():
+                if search_term.casefold() in record.name.value.casefold():
                     # Full match, case insensitive
                     matches.append(record)
                 else:
                     # Partial match, case insensitive
                     if any(
-                        search_term.lower() in phone.value.lower()
+                        search_term.casefold() in phone.value.casefold()
                         for phone in record.phones
                     ):
                         matches.append(record)
@@ -142,7 +141,7 @@ class AddressBook(UserDict):
 
         return matches
 
-    def delete(self, username: str) -> str:
+    def delete(self, username: str) -> None:
         """
         Deletes a contact from the address book.
 
@@ -199,60 +198,60 @@ class AddressBook(UserDict):
             if birthday.value.month == 2 and birthday.value.day == 29:
                 if is_leap_year(today_obj.year):
                     # For leap years, keep February 29
-                    congratulation_date = birthday.value.replace(year=today_obj.year)
+                    birthday_this_year = birthday.value.replace(year=today_obj.year)
                 else:
                     # For non-leap years, set birthday to March 1
-                    congratulation_date = birthday.value.replace(
+                    birthday_this_year = birthday.value.replace(
                         year=today_obj.year, month=3, day=1
                     )
             else:
                 # For other birthdays, just replace the year
-                congratulation_date = birthday.value.replace(year=today_obj.year)
+                birthday_this_year = birthday.value.replace(year=today_obj.year)
 
             # Handle the case if birthday has passed, adjust to next year
-            if congratulation_date < today_obj:
+            if birthday_this_year < today_obj:
                 # If it's a February 29 birthday in a non-leap year,
                 # adjust it to March 1 of next year
-                if congratulation_date.month == 2 and congratulation_date.day == 29:
+                if birthday_this_year.month == 2 and birthday_this_year.day == 29:
                     if not is_leap_year(today_obj.year + 1):
-                        congratulation_date = congratulation_date.replace(
+                        birthday_this_year = birthday_this_year.replace(
                             year=today_obj.year + 1, month=3, day=1
                         )
                     else:
-                        congratulation_date = congratulation_date.replace(
+                        birthday_this_year = birthday_this_year.replace(
                             year=today_obj.year + 1
                         )
                 else:
                     # Otherwise just move it to the next year
-                    congratulation_date = congratulation_date.replace(
+                    birthday_this_year = birthday_this_year.replace(
                         year=today_obj.year + 1
                     )
 
             # Filter dates in upcoming period range and add them to the congratulations list
             from_date = today_obj
             till_date = today_obj + timedelta(upcoming_period_days)
-            is_in_upcoming_rage = from_date <= congratulation_date <= till_date
+            is_in_upcoming_rage = from_date <= birthday_this_year <= till_date
             if is_in_upcoming_rage:
+                congratulation_date = birthday_this_year
                 # Move weekend congratulation to the following Monday
-                if congratulation_date.weekday() == 5:  # Saturday moved to Monday
+                if birthday_this_year.weekday() == 5:  # Saturday moved to Monday
                     congratulation_date += timedelta(days=2)
-                elif congratulation_date.weekday() == 6:  # Sunday moved to Monday
+                elif birthday_this_year.weekday() == 6:  # Sunday moved to Monday
                     congratulation_date += timedelta(days=1)
 
                 # Add congratulation date object to the list
                 user_congratulations.append(
                     {
                         "name": record.name.value,
-                        "congratulation_date": congratulation_date,
+                        "congratulation": congratulation_date,
+                        "congratulation_actual": birthday_this_year,
                     }
                 )
 
         # Sort congratulations by date
-        user_congratulations.sort(key=lambda user: user["congratulation_date"])
-
-        # Convert congratulations date to string date representation
-        for user in user_congratulations:
-            user["congratulation_date"] = format_date_str(user["congratulation_date"])
+        user_congratulations.sort(
+            key=lambda user: (user["congratulation"], user["name"].casefold())
+        )
 
         return user_congratulations
 
