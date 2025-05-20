@@ -54,7 +54,7 @@ def ensure_contact_not_in_contacts_storage(username: str, contacts: dict) -> Non
             raise ValidationError(f"{MSG_CONTACT_EXISTS.format(username)}.")
 
         # Check for case-insensitive match
-        if contact_name.lower() == username.lower():
+        if contact_name.casefold() == username.casefold():
             raise ValidationError(
                 f"{MSG_CONTACT_EXISTS.format(username)}, "
                 f"but under a different name: '{contact_name}'."
@@ -74,7 +74,7 @@ def ensure_contact_is_in_contacts_storage(
     Raises:
         ValidationError: If contact doesn't exist or name differs by case.
     """
-    match = next((c for c in contacts if c.lower() == username.lower()), None)
+    match = next((c for c in contacts if c.casefold() == username.casefold()), None)
 
     if not match:
         raise ValidationError(f"{MSG_CONTACT_NOT_FOUND.format(username)}.")
