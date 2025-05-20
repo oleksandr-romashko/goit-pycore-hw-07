@@ -34,6 +34,7 @@ class Record:
         - edit_phone(old, new): Edits an existing phone.
         - remove_phone(phone_number): Removes a phone.
         - add_birthday(date): Adds or updates birthday.
+        - to_dict(): Returns the record as a dictionary.
     """
 
     def __init__(self, username: str):
@@ -71,6 +72,19 @@ class Record:
         if isinstance(item, Birthday):
             return self.birthday == item
         return False
+
+    def to_dict(self) -> dict:
+        """
+        Return a dictionary representation of the contact record.
+
+        Returns:
+            dict: A dictionary with name, list of phones, and optional birthday.
+        """
+        return {
+            "name": self.name.to_dict(),
+            "phones": [phone.to_dict() for phone in self.phones],
+            "birthday": self.birthday.to_dict() if self.birthday else None,
+        }
 
     def add_phone(self, phone_number: str) -> None:
         """
@@ -302,7 +316,10 @@ if __name__ == "__main__":
     try:
         test_record_birthday.add_birthday(TEST_BIRTHDAY_DATE_STR)
     except ValidationError as exc:
-        TEST_ERR_MSG_BIRTHDAY_DUPLICATE = f"Birthday for '{TEST_BIRTHDAY_USERNAME}' is already set to '{TEST_BIRTHDAY_DATE_STR}'."
+        TEST_ERR_MSG_BIRTHDAY_DUPLICATE = (
+            f"Birthday for '{TEST_BIRTHDAY_USERNAME}' "
+            f"is already set to '{TEST_BIRTHDAY_DATE_STR}'."
+        )
         assert str(exc) == TEST_ERR_MSG_BIRTHDAY_DUPLICATE
     else:
         assert (

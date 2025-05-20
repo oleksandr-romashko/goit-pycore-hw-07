@@ -14,7 +14,9 @@ class Field:
     Base class for contact record fields.
 
     Stores a single value and provides a default string representation.
-    Instances of Field are compared based on their stored value.
+
+    Provides common functionality including: __str__(), __repr__(), to_dict().
+    Instances of Field are compared (__eq__) based on their stored value.
     """
 
     _value: any
@@ -24,6 +26,15 @@ class Field:
 
     def __repr__(self):
         return f"{self.__class__.__name__}(value={repr(self.value)})"
+
+    def to_dict(self) -> str:
+        """
+        Return the string representation of the field value.
+
+        Returns:
+            str: The field value as a string.
+        """
+        return str(self.value)
 
     @property
     def value(self) -> any:

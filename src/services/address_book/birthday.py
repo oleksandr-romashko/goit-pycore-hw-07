@@ -31,6 +31,15 @@ class Birthday(Field):
     def __str__(self):
         return format_date_str(self.value)
 
+    def to_dict(self) -> str | None:
+        """
+        Return the birthday value as an ISO-formatted date string.
+
+        Returns:
+            str | None: The birthday in 'YYYY-MM-DD' format if set, otherwise None.
+        """
+        return self.value.isoformat() if self.value else None
+
     @Field.value.setter
     def value(self, date_value: str | date):
         """
