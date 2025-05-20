@@ -1,3 +1,11 @@
+"""
+Utility module for parsing user input into commands and arguments.
+
+Provides a function to extract the command and associated arguments
+from a raw input string, enabling structured command processing.
+"""
+
+
 def parse_input(user_input: str) -> tuple[str, list[str]]:
     """
     Parse the user input into a command and its associated arguments.
