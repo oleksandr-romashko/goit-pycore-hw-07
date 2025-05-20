@@ -25,9 +25,9 @@ def format_date_str(date_obj: date) -> str:
 
 
 if __name__ == "__main__":
-    assert is_leap_year(2000) == True
-    assert is_leap_year(2004) == True
-    assert is_leap_year(2001) == False
+    assert is_leap_year(2000) is True
+    assert is_leap_year(2004) is True
+    assert is_leap_year(2001) is False
 
     assert (format_date_str(date(2000, 1, 1))) == "01.01.2000"
 
