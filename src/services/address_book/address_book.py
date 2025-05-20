@@ -66,6 +66,17 @@ class AddressBook(UserDict):
 
         return format_text_output(header, line_items)
 
+    def to_dict(self) -> dict:
+        """
+        Return a dictionary representation of the entire address book.
+
+        Each key is a contact name, and the value is a dictionary of contact details.
+
+        Returns:
+            dict: Dictionary of contacts with serialized record data.
+        """
+        return {key: record.to_dict() for key, record in self.data.items()}
+
     def add_record(self, contact: Record) -> None:
         """
         Adds a new contact record to the address book.
