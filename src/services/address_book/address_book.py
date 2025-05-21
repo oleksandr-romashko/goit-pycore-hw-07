@@ -12,7 +12,7 @@ from collections import UserDict
 from services.address_book.record import Record
 
 from utils.date_utils import is_leap_year, parse_date
-from utils.text_utils import format_text_output
+from utils.text_utils import format_contacts_output
 from validators.errors import ValidationError
 from validators.args_validators import validate_argument_type
 from validators.contact_validators import (
@@ -21,7 +21,6 @@ from validators.contact_validators import (
     ensure_contact_is_in_contacts_storage,
 )
 
-MSG_HAVE_CONTACTS = "You have {0} contact{1}"
 MSG_FOUND_MATCHES = "Found {0} match{1}"
 
 
@@ -41,30 +40,13 @@ class AddressBook(UserDict):
 
     def __str__(self) -> str:
         """
-        Returns a nicely formatted string listing all contacts with aligned phone numbers.
+        Returns a formatted string listing all contacts.
 
         Raises:
             ValidationError: If the address book is empty.
         """
         ensure_contacts_storage_not_empty(self.data)
-
-        # Format output with header and aligned lines
-        count = len(self.data)
-        suffix = "" if count == 1 else "s"
-        header = f"{MSG_HAVE_CONTACTS.format(count, suffix)}"
-
-        line_items = []
-        for record in self.data.values():
-            title = record.name.value
-            birthday = f"birthday {str(record.birthday)}, " if record.birthday else ""
-            phones = f"phones {'; '.join(phone.value for phone in record.phones)}"
-            value = f"{birthday}{phones}"
-            line_items.append((title, value))
-
-        # Sort by name (case-insensitive)
-        line_items = sorted(line_items, key=lambda item: item[0].casefold())
-
-        return format_text_output(header, line_items)
+        return format_contacts_output(self.to_dict())
 
     def to_dict(self) -> dict:
         """
@@ -126,7 +108,7 @@ class AddressBook(UserDict):
             ValidationError: If address book is empty.
 
         Returns:
-            str: A formatted list of matches or a no matches message.
+            list[Record]: List of matched contacts.
         """
         ensure_contacts_storage_not_empty(self)
 
@@ -166,12 +148,11 @@ class AddressBook(UserDict):
             str: A message confirming deletion.
         """
         ensure_contact_is_in_contacts_storage(username, self.data)
-
         self.data.pop(username)
 
     def get_upcoming_birthdays(
         self, today: str = None, upcoming_period_days: int = 7
-    ) -> list[dict[str, str]]:
+    ) -> list[dict[str, str | date]]:
         """
         Returns a list of users who have birthdays within the upcoming period from today.
 
@@ -179,7 +160,6 @@ class AddressBook(UserDict):
         The returned list contains dicts with "name" and the upcoming
         "congratulation_date" in string format (YYYY-MM-DD).
 
-        :param users: List of users with "name" and "birthday" keys.
         :param today: The date to start checking from (default: current date).
         :param upcoming_period_days: Number of days ahead to check for birthdays (default: 7).
         :return: List of users with upcoming birthdays sorted by date.
@@ -323,7 +303,7 @@ if __name__ == "__main__":
     TEST_MSG_BOOK_STR_2_CONTACTS = (
         "You have 2 contacts:\n"
         "  Alice : phones 1234567890\n"
-        "  Bob   : phones 9876543210; 7233232321"
+        "  Bob   : phones 9876543210, 7233232321"
     )
     assert str(test_book) == TEST_MSG_BOOK_STR_2_CONTACTS
 
@@ -586,7 +566,13 @@ if __name__ == "__main__":
 
     # birthdays - test single record + move birthday from weekend to closest weekday
     book_birthdays.add_record(birthday_record_1)
-    birthdays_one_expected = [{"name": "Alice", "congratulation_date": "06.01.2025"}]
+    birthdays_one_expected = [
+        {
+            "name": "Alice",
+            "congratulation": date(2025, 1, 6),
+            "congratulation_actual": date(2025, 1, 4),
+        }
+    ]
     birthdays_one_result = book_birthdays.get_upcoming_birthdays(today="01.01.2025")
     assert birthdays_one_expected == birthdays_one_result
 
@@ -596,14 +582,34 @@ if __name__ == "__main__":
         {"name": "Bob", "congratulation_date": "01.01.2025"},
         {"name": "Alice", "congratulation_date": "06.01.2025"},
     ]
+    birthdays_two_expected = [
+        {
+            "name": "Bob",
+            "congratulation": date(2025, 1, 1),
+            "congratulation_actual": date(2025, 1, 1),
+        },
+        {
+            "name": "Alice",
+            "congratulation": date(2025, 1, 6),
+            "congratulation_actual": date(2025, 1, 4),
+        },
+    ]
     birthdays_two_result = book_birthdays.get_upcoming_birthdays(today="01.01.2025")
     assert birthdays_two_expected == birthdays_two_result
 
     # birthdays - test three records when birthdays out of upcoming period are ignored
     book_birthdays.add_record(birthday_record_3)
     birthdays_three_expected = [
-        {"name": "Bob", "congratulation_date": "01.01.2025"},
-        {"name": "Alice", "congratulation_date": "06.01.2025"},
+        {
+            "name": "Bob",
+            "congratulation": date(2025, 1, 1),
+            "congratulation_actual": date(2025, 1, 1),
+        },
+        {
+            "name": "Alice",
+            "congratulation": date(2025, 1, 6),
+            "congratulation_actual": date(2025, 1, 4),
+        },
     ]
     birthdays_three_result = book_birthdays.get_upcoming_birthdays(today="01.01.2025")
     assert birthdays_three_expected == birthdays_three_result
@@ -611,9 +617,21 @@ if __name__ == "__main__":
     # birthdays - test three records when upcoming passes new year + adding year to upcoming
     # Note: for "Alice" closest work day after weekend in 2026 is 05.01, not like in 2025 06.01
     birthdays_passing_new_year_expected = [
-        {"name": "Charlie", "congratulation_date": "31.12.2025"},
-        {"name": "Bob", "congratulation_date": "01.01.2026"},
-        {"name": "Alice", "congratulation_date": "05.01.2026"},
+        {
+            "name": "Charlie",
+            "congratulation": date(2025, 12, 31),
+            "congratulation_actual": date(2025, 12, 31),
+        },
+        {
+            "name": "Bob",
+            "congratulation": date(2026, 1, 1),
+            "congratulation_actual": date(2026, 1, 1),
+        },
+        {
+            "name": "Alice",
+            "congratulation": date(2026, 1, 5),
+            "congratulation_actual": date(2026, 1, 4),
+        },
     ]
     birthdays_passing_new_year_result = book_birthdays.get_upcoming_birthdays(
         today="30.12.2025"
@@ -622,9 +640,21 @@ if __name__ == "__main__":
 
     # birthdays - additional test of upcoming period of whole year
     birthdays_upcoming_period_1_expected = [
-        {"name": "Bob", "congratulation_date": "01.01.2025"},
-        {"name": "Alice", "congratulation_date": "06.01.2025"},
-        {"name": "Charlie", "congratulation_date": "31.12.2025"},
+        {
+            "name": "Bob",
+            "congratulation": date(2025, 1, 1),
+            "congratulation_actual": date(2025, 1, 1),
+        },
+        {
+            "name": "Alice",
+            "congratulation": date(2025, 1, 6),
+            "congratulation_actual": date(2025, 1, 4),
+        },
+        {
+            "name": "Charlie",
+            "congratulation": date(2025, 12, 31),
+            "congratulation_actual": date(2025, 12, 31),
+        },
     ]
     birthdays_upcoming_period_1_result = book_birthdays.get_upcoming_birthdays(
         today="01.01.2025", upcoming_period_days=365
@@ -633,9 +663,21 @@ if __name__ == "__main__":
 
     # birthdays - additional test of upcoming period of whole year with correct sorting
     birthdays_upcoming_period_2_expected = [
-        {"name": "Alice", "congratulation_date": "06.01.2025"},
-        {"name": "Charlie", "congratulation_date": "31.12.2025"},
-        {"name": "Bob", "congratulation_date": "01.01.2026"},
+        {
+            "name": "Alice",
+            "congratulation": date(2025, 1, 6),
+            "congratulation_actual": date(2025, 1, 4),
+        },
+        {
+            "name": "Charlie",
+            "congratulation": date(2025, 12, 31),
+            "congratulation_actual": date(2025, 12, 31),
+        },
+        {
+            "name": "Bob",
+            "congratulation": date(2026, 1, 1),
+            "congratulation_actual": date(2026, 1, 1),
+        },
     ]
     birthdays_upcoming_period_2_result = book_birthdays.get_upcoming_birthdays(
         today="03.01.2025", upcoming_period_days=365
