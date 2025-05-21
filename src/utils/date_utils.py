@@ -31,4 +31,4 @@ if __name__ == "__main__":
 
     assert (format_date_str(date(2000, 1, 1))) == "01.01.2000"
 
-    print("Date utils tests passed.")
+    print("Date Utils tests passed.")
