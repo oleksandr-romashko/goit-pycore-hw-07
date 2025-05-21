@@ -2,16 +2,24 @@
 Reusable string utilities for formatting, truncation, and other text operations.
 """
 
+from datetime import date
+
+from utils.constants import DATE_FORMAT_STR_REPRESENTATION
+from utils.date_utils import format_date_str
+
 DEFAULT_TRUNCATE_LENGTH = 8
 MSG_FORMATTED_LINE = "{offset}{title} : {value}"
 MSG_DEFAULT_LINE_OFFSET = "  "
+MSG_BIRTHDAY_MOVED = "(moved to closest weekday from {0})"
+LINE_VALUE_GROUP_SEPARATION_SYMBOL = ":"
+LINE_VALUE_LIST_SEPARATION_SYMBOL = ","
 
 
 def truncate_string(
     string: str,
     max_length: int = DEFAULT_TRUNCATE_LENGTH,
     suffix: str = "...",
-    include_suffix_in_max_length: bool = False,
+    include_suffix_in_text_max_length: bool = False,
 ) -> str:
     """
     Truncates the given string to a maximum length and optionally appends a suffix.
@@ -20,7 +28,8 @@ def truncate_string(
         string (str): The input string to truncate.
         max_length (int): The maximum allowed total length of the result string.
         suffix (str): The suffix to append (e.g. "...").
-        include_suffix_in_max_length (bool): Whether the suffix length counts toward max_length.
+        include_suffix_in_text_max_length (bool): Whether the suffix length
+        counts toward max_length.
 
     Returns:
         str: The truncated string with or without suffix as specified.
@@ -63,7 +72,7 @@ def truncate_string(
         return string
 
     # Case where suffix has no influence on result and just added to the end of the truncated string
-    if not include_suffix_in_max_length:
+    if not include_suffix_in_text_max_length:
         return f"{string[:max_length]}{suffix}"
 
     # Following is a case when suffix length matters
@@ -84,58 +93,100 @@ def truncate_string(
 
 
 def format_text_output(
-    header: str, items: list, offset: str = MSG_DEFAULT_LINE_OFFSET
+    output_result: dict[str, str | list[dict]],
+    lines_offset: str = MSG_DEFAULT_LINE_OFFSET,
 ) -> str:
     """
-    Formats a header and a list of (key, value) pairs into aligned output.
+    Format the structured result dictionary into a human-readable text output.
+
+    This function takes a result dictionary containing a message and optional list of items
+    (such as contacts), and formats them into aligned multiline string output. Items are expected
+    to contain keys like 'name', 'phones', 'birthday', or 'congratulation' (optionally with
+    'congratulation_actual').
 
     Args:
-        header (str): The header/title line.
-        items (list of tuple[str, str]): The items to format.
-        offset (str): Optional string for indentation.
+        result (dict): A dictionary with the keys:
+            - "message" (str): The main header or summary message.
+            - "items" (list[dict], optional): A list of dictionaries containing item details.
+        lines_offset (str, optional): A string prefix for each item line, e.g., indentation.
 
     Returns:
-        str: Formatted multi-line string starting with header.
+        str: A formatted string suitable for display in a CLI interface.
+
+    Notes:
+        - If no items are provided, only the message is returned.
+        - The output aligns all item names to the same column width.
+        - Special handling is applied to display congratulation dates with weekday adjustments.
     """
-    return f"{header}:\n{format_columns_output(items, offset)}"
+    message = output_result.get("message")
+    items = output_result.get("items", [])
+
+    if not items:
+        return message
+
+    lines = [f"{message}:"] if message else []
+    max_name_len = max(len(item.get("name", "")) for item in items)
+    has_birthday = any(
+        item.get("birthday") and item.get("birthday") != "None" for item in items
+    )
+    for item in items:
+        lines.append(__format_item(item, lines_offset, max_name_len, has_birthday))
+
+    return "\n".join(lines)
 
 
-def format_columns_output(
-    items: list[tuple[str, str]], offset: str = MSG_DEFAULT_LINE_OFFSET
+def __format_item(
+    item: dict, lines_offset: str, max_name_len: int, has_birthday: bool
 ) -> str:
-    """
-    Formats a list of (title, value) pairs into aligned columns.
+    # name
+    name = item.get("name", "")
 
-    Args:
-        items (list of tuple[str, str]): The data to format.
-        offset (str): String used for indentation (default: 2 spaces).
+    values = []
 
-    Returns:
-        str: Multi-line string with aligned output.
-    """
-    max_title_len = max((len(item[0]) for item in items), default=0)
-    str_lines = [format_line_output(item, max_title_len, offset) for item in items]
-    return "\n".join(str_lines)
+    # birthday
+    birthday_raw = item.get(
+        "birthday"
+    )  # May be: None or "None" str or ISO format date str
+    birthday = ""
+    if birthday_raw and birthday_raw != "None":
+        birthday_date_obj = date.fromisoformat(birthday_raw)
+        formatted_birthday_date_str = format_date_str(birthday_date_obj)
+        birthday = f"birthday {formatted_birthday_date_str}"
+        values.append(birthday)
+    elif has_birthday:
+        birthday = " ".ljust(len(f"birthday {DATE_FORMAT_STR_REPRESENTATION}"))
+        values.append(birthday)
 
+    # phones
+    phones_raw = item.get("phones")  # May be: None or "None" str or []
+    phones_label = "phones "
+    if isinstance(phones_raw, list):
+        joined_phones = f"{LINE_VALUE_LIST_SEPARATION_SYMBOL} ".join(phones_raw)
+        values.append(f"{phones_label}{joined_phones}")
+    elif phones_raw and phones_raw != "None":
+        values.append(phones_label)
 
-def format_line_output(
-    item: tuple[str, str], max_title_len=0, offset: str = MSG_DEFAULT_LINE_OFFSET
-) -> str:
-    """
-    Formats a single (title, value) pair into an aligned string line.
+    # upcoming congratulation date
+    congratulation_raw = item.get("congratulation")
+    congratulation = ""
+    if congratulation_raw and congratulation_raw != "None":
+        congratulation_date_obj = date.fromisoformat(congratulation_raw)
+        formatted_congratulation_date_str = format_date_str(congratulation_date_obj)
+        congratulation = f"{formatted_congratulation_date_str}"
+    # additional note about moved congratulation date
+    actual_raw = item.get("congratulation_actual")
+    actual_info = ""
+    if actual_raw and actual_raw != "None" and actual_raw != congratulation_raw:
+        actual_date_obj = date.fromisoformat(actual_raw)
+        actual_date_str = format_date_str(actual_date_obj)
+        actual_info = f"{MSG_BIRTHDAY_MOVED.format(actual_date_str)}"
+        congratulation = f"{congratulation} {actual_info}"
+    if congratulation:
+        values.append(congratulation)
 
-    Args:
-        item (tuple[str, str]): A pair where the first element is the title,
-                                and the second is the value.
-        max_title_len (int): The length to pad the title to for alignment.
-        offset (str): String to prepend for indentation (default is two spaces).
-
-    Returns:
-        str: A formatted string like '  Title : Value', with aligned titles
-             based on max_title_len.
-    """
-    return MSG_FORMATTED_LINE.format(
-        offset=offset, title=item[0].ljust(max_title_len), value=item[1]
+    return (
+        f"{lines_offset}{name.ljust(max_name_len)} : "
+        f"{(' ' + LINE_VALUE_GROUP_SEPARATION_SYMBOL + ' ').join(values)}"
     )
 
 
@@ -145,94 +196,97 @@ if __name__ == "__main__":
     # Truncate tests
 
     TEST_TRUNCATE_STRING = "Hello world!"
-    # tweaking string value
+    # test tweaking string value
     assert truncate_string(TEST_TRUNCATE_STRING) == "Hello wo..."
     assert (
-        truncate_string(TEST_TRUNCATE_STRING, include_suffix_in_max_length=True)
+        truncate_string(TEST_TRUNCATE_STRING, include_suffix_in_text_max_length=True)
         == "Hello..."
     )
     assert truncate_string("12345678") == "12345678"
-    assert truncate_string("12345678", include_suffix_in_max_length=True) == "12345678"
+    assert (
+        truncate_string("12345678", include_suffix_in_text_max_length=True)
+        == "12345678"
+    )
     assert truncate_string("abc") == "abc"
-    assert truncate_string("abc", include_suffix_in_max_length=True) == "abc"
+    assert truncate_string("abc", include_suffix_in_text_max_length=True) == "abc"
     assert truncate_string("") == ""
-    assert truncate_string("", include_suffix_in_max_length=True) == ""
-    # tweaking max_length value
+    assert truncate_string("", include_suffix_in_text_max_length=True) == ""
+    # test tweaking max_length value
     assert truncate_string(TEST_TRUNCATE_STRING, max_length=13) == TEST_TRUNCATE_STRING
     assert (
         truncate_string(
-            TEST_TRUNCATE_STRING, max_length=13, include_suffix_in_max_length=True
+            TEST_TRUNCATE_STRING, max_length=13, include_suffix_in_text_max_length=True
         )
         == TEST_TRUNCATE_STRING
     )
     assert truncate_string(TEST_TRUNCATE_STRING, max_length=12) == TEST_TRUNCATE_STRING
     assert (
         truncate_string(
-            TEST_TRUNCATE_STRING, max_length=12, include_suffix_in_max_length=True
+            TEST_TRUNCATE_STRING, max_length=12, include_suffix_in_text_max_length=True
         )
         == TEST_TRUNCATE_STRING
     )
     assert truncate_string(TEST_TRUNCATE_STRING, max_length=9) == "Hello wor..."
     assert (
         truncate_string(
-            TEST_TRUNCATE_STRING, max_length=9, include_suffix_in_max_length=True
+            TEST_TRUNCATE_STRING, max_length=9, include_suffix_in_text_max_length=True
         )
         == "Hello ..."
     )
     assert truncate_string(TEST_TRUNCATE_STRING, max_length=3) == "Hel..."
     assert (
         truncate_string(
-            TEST_TRUNCATE_STRING, max_length=3, include_suffix_in_max_length=True
+            TEST_TRUNCATE_STRING, max_length=3, include_suffix_in_text_max_length=True
         )
         == "..."
     )
     assert truncate_string(TEST_TRUNCATE_STRING, max_length=2) == "He..."
     assert (
         truncate_string(
-            TEST_TRUNCATE_STRING, max_length=2, include_suffix_in_max_length=True
+            TEST_TRUNCATE_STRING, max_length=2, include_suffix_in_text_max_length=True
         )
         == ".."
     )
     assert truncate_string(TEST_TRUNCATE_STRING, max_length=1) == "H..."
     assert (
         truncate_string(
-            TEST_TRUNCATE_STRING, max_length=1, include_suffix_in_max_length=True
+            TEST_TRUNCATE_STRING, max_length=1, include_suffix_in_text_max_length=True
         )
         == "."
     )
     assert truncate_string(TEST_TRUNCATE_STRING, max_length=0) == "..."
     assert (
         truncate_string(
-            TEST_TRUNCATE_STRING, max_length=0, include_suffix_in_max_length=True
+            TEST_TRUNCATE_STRING, max_length=0, include_suffix_in_text_max_length=True
         )
         == ""
     )
     assert truncate_string(TEST_TRUNCATE_STRING, max_length=-1) == "Hello world..."
     assert (
         truncate_string(
-            TEST_TRUNCATE_STRING, max_length=-1, include_suffix_in_max_length=True
+            TEST_TRUNCATE_STRING, max_length=-1, include_suffix_in_text_max_length=True
         )
         == ""
     )
-    # tweaking suffix value
+    # test tweaking suffix value
     assert truncate_string(TEST_TRUNCATE_STRING, suffix="###") == "Hello wo###"
     assert (
         truncate_string(
-            TEST_TRUNCATE_STRING, suffix="###", include_suffix_in_max_length=True
+            TEST_TRUNCATE_STRING, suffix="###", include_suffix_in_text_max_length=True
         )
         == "Hello###"
     )
     assert truncate_string(TEST_TRUNCATE_STRING, suffix="123") == "Hello wo123"
     assert (
         truncate_string(
-            TEST_TRUNCATE_STRING, suffix="123", include_suffix_in_max_length=True
+            TEST_TRUNCATE_STRING, suffix="123", include_suffix_in_text_max_length=True
         )
         == "Hello123"
     )
     assert truncate_string(TEST_TRUNCATE_STRING, suffix="") == "Hello wo"
     assert (
         truncate_string(
-            TEST_TRUNCATE_STRING, suffix="", include_suffix_in_max_length=True
+            TEST_TRUNCATE_STRING, suffix="", include_suffix_in_text_max_length=True
         )
         == "Hello wo"
     )
@@ -241,7 +295,9 @@ if __name__ == "__main__":
     )
     assert (
         truncate_string(
-            TEST_TRUNCATE_STRING, suffix="12345678", include_suffix_in_max_length=True
+            TEST_TRUNCATE_STRING,
+            suffix="12345678",
+            include_suffix_in_text_max_length=True,
         )
         == "12345678"
     )
@@ -250,7 +306,9 @@ if __name__ == "__main__":
     )
     assert (
         truncate_string(
-            TEST_TRUNCATE_STRING, suffix="123456789", include_suffix_in_max_length=True
+            TEST_TRUNCATE_STRING,
+            suffix="123456789",
+            include_suffix_in_text_max_length=True,
         )
         == "23456789"
     )
@@ -260,44 +318,258 @@ if __name__ == "__main__":
     )
     assert (
         truncate_string(
-            TEST_TRUNCATE_STRING, suffix="1234567890", include_suffix_in_max_length=True
+            TEST_TRUNCATE_STRING,
+            suffix="1234567890",
+            include_suffix_in_text_max_length=True,
         )
         == "34567890"
     )
     assert truncate_string("", suffix="") == ""
-    assert truncate_string("", suffix="", include_suffix_in_max_length=True) == ""
+    assert truncate_string("", suffix="", include_suffix_in_text_max_length=True) == ""
 
-    # format_line_output test
+    try:
+        truncate_string(123)
+    except TypeError as exc:
+        assert "expected 'string'" in str(exc)
+    else:
+        assert (
+            False
+        ), "Should raise TypeError when passed incorrect type into truncate_string"
 
-    test_format_line_item = ("Alice", "1234567890")
-    TEST_FORMAT_LINE_RESULT = format_line_output(
-        test_format_line_item, max_title_len=5, offset="  "
+    try:
+        truncate_string("abc", max_length="5")
+    except TypeError:
+        pass
+    else:
+        assert False, "Should raise TypeError when max_length is not int"
+
+    # test format_line_output
+
+    TEST_FORMAT_TEXT_OUTPUT_1_1_RESULT = format_text_output(
+        output_result={
+            "message": "Test message header",
+        },
+        lines_offset="  ",
     )
-    assert TEST_FORMAT_LINE_RESULT == "  Alice : 1234567890"
-    assert format_line_output(("Name", "Alice"), max_title_len=6) == "  Name   : Alice"
+    TEST_FORMAT_TEXT_OUTPUT_1_1_EXPECTED = "Test message header"
+    assert TEST_FORMAT_TEXT_OUTPUT_1_1_EXPECTED == TEST_FORMAT_TEXT_OUTPUT_1_1_RESULT
 
-    # format_columns_output tests
-
-    test_format_columns_items = [("Alice", "1234567890"), ("Bob", "0987654321")]
-    TEST_FORMAT_COLUMNS_RESULT = format_columns_output(
-        test_format_columns_items, offset="> "
+    TEST_FORMAT_TEXT_OUTPUT_2_1_RESULT = format_text_output(
+        output_result={
+            "items": [
+                {
+                    "name": "test username",
+                    "birthday": "2024-12-23",
+                }
+            ],
+        },
+        lines_offset="",
     )
-    assert TEST_FORMAT_COLUMNS_RESULT == (
-        "> Alice : 1234567890\n" "> Bob   : 0987654321"
+    TEST_FORMAT_TEXT_OUTPUT_2_1_EXPECTED = "test username : birthday 23.12.2024"
+    assert TEST_FORMAT_TEXT_OUTPUT_2_1_EXPECTED == TEST_FORMAT_TEXT_OUTPUT_2_1_RESULT
+
+    TEST_FORMAT_TEXT_OUTPUT_3_2_RESULT = format_text_output(
+        output_result={
+            "message": "Test message header",
+            "items": [
+                {
+                    "name": "test username",
+                    "phones": [],
+                }
+            ],
+        },
     )
-
-    TEST_FORMAT_COLUMNS_ITEMS_EMPTY = format_columns_output([])
-    assert TEST_FORMAT_COLUMNS_ITEMS_EMPTY == ""
-
-    # format_text_output tests
-
-    TEST_FORMAT_TEXT_TITLE = "Found contacts"
-    test_format_text_items = [("Alice", "1234567890"), ("Bob", "0987654321")]
-    TEST_FORMAT_TEXT_RESULT = format_text_output(
-        TEST_FORMAT_TEXT_TITLE, test_format_text_items, offset="- "
+    TEST_FORMAT_TEXT_OUTPUT_3_2_EXPECTED = (
+        "Test message header:\n" "  test username : phones "
     )
-    assert TEST_FORMAT_TEXT_RESULT == (
-        "Found contacts:\n" "- Alice : 1234567890\n" "- Bob   : 0987654321"
-    )
+    assert TEST_FORMAT_TEXT_OUTPUT_3_2_EXPECTED == TEST_FORMAT_TEXT_OUTPUT_3_2_RESULT
 
-    print("Test utils tests passed.")
+    TEST_FORMAT_TEXT_OUTPUT_3_3_RESULT = format_text_output(
+        output_result={
+            "message": "Test message header",
+            "items": [
+                {
+                    "name": "test username",
+                    "phones": ["1234567890"],
+                }
+            ],
+        },
+    )
+    TEST_FORMAT_TEXT_OUTPUT_3_3_EXPECTED = (
+        "Test message header:\n" "  test username : phones 1234567890"
+    )
+    assert TEST_FORMAT_TEXT_OUTPUT_3_3_EXPECTED == TEST_FORMAT_TEXT_OUTPUT_3_3_RESULT
+
+    TEST_FORMAT_TEXT_OUTPUT_3_4_RESULT = format_text_output(
+        output_result={
+            "message": "Test message header",
+            "items": [
+                {
+                    "name": "test username",
+                    "phones": ["1234567890", "0987654321"],
+                }
+            ],
+        },
+    )
+    TEST_FORMAT_TEXT_OUTPUT_3_4_EXPECTED = (
+        "Test message header:\n" "  test username : phones 1234567890, 0987654321"
+    )
+    assert TEST_FORMAT_TEXT_OUTPUT_3_4_EXPECTED == TEST_FORMAT_TEXT_OUTPUT_3_4_RESULT
+
+    TEST_FORMAT_TEXT_OUTPUT_3_5_RESULT = format_text_output(
+        output_result={
+            "message": "Test message header",
+            "items": [
+                {
+                    "name": "test username 1",
+                    "phones": ["1111111111"],
+                },
+                {
+                    "name": "test username 2",
+                    "phones": ["2222222222", "3333333333"],
+                },
+            ],
+        },
+    )
+    TEST_FORMAT_TEXT_OUTPUT_3_5_EXPECTED = (
+        "Test message header:\n"
+        "  test username 1 : phones 1111111111\n"
+        "  test username 2 : phones 2222222222, 3333333333"
+    )
+    assert TEST_FORMAT_TEXT_OUTPUT_3_5_EXPECTED == TEST_FORMAT_TEXT_OUTPUT_3_5_RESULT
+
+    TEST_FORMAT_TEXT_OUTPUT_4_1_RESULT = format_text_output(
+        output_result={
+            "message": "Test message header",
+            "items": [
+                {
+                    "name": "test username",
+                    "birthday": "2024-12-23",
+                    "phones": ["1234567890", "0987654321"],
+                }
+            ],
+        },
+    )
+    TEST_FORMAT_TEXT_OUTPUT_4_1_EXPECTED = (
+        "Test message header:\n"
+        "  test username : birthday 23.12.2024 : phones 1234567890, 0987654321"
+    )
+    assert TEST_FORMAT_TEXT_OUTPUT_4_1_EXPECTED == TEST_FORMAT_TEXT_OUTPUT_4_1_RESULT
+
+    TEST_FORMAT_TEXT_OUTPUT_5_1_RESULT = format_text_output(
+        output_result={
+            "message": "Test message header",
+            "items": [
+                {
+                    "name": "test username 1",
+                    "phones": ["1234567890", "0987654321"],
+                },
+                {
+                    "name": "test username 2",
+                    "birthday": "2024-12-23",
+                    "phones": ["1111111111", "2222222222"],
+                },
+                {
+                    "name": "test username 3",
+                    "phones": ["3333333333"],
+                },
+                {
+                    "name": "test username 4",
+                    "birthday": "2024-12-24",
+                    "phones": ["4444444444"],
+                },
+            ],
+        },
+        lines_offset="👤 ",
+    )
+    TEST_FORMAT_TEXT_OUTPUT_5_1_EXPECTED = (
+        "Test message header:\n"
+        "👤 test username 1 :                     : phones 1234567890, 0987654321\n"
+        "👤 test username 2 : birthday 23.12.2024 : phones 1111111111, 2222222222\n"
+        "👤 test username 3 :                     : phones 3333333333\n"
+        "👤 test username 4 : birthday 24.12.2024 : phones 4444444444"
+    )
+    assert TEST_FORMAT_TEXT_OUTPUT_5_1_EXPECTED == TEST_FORMAT_TEXT_OUTPUT_5_1_RESULT
+
+    TEST_FORMAT_TEXT_OUTPUT_6_1_RESULT = format_text_output(
+        output_result={
+            "message": "Test message header",
+            "items": [
+                {
+                    "name": "test username 1",
+                    "congratulation": "2024-12-23",
+                }
+            ],
+        },
+    )
+    TEST_FORMAT_TEXT_OUTPUT_6_1_EXPECTED = (
+        "Test message header:\n" "  test username 1 : 23.12.2024"
+    )
+    assert TEST_FORMAT_TEXT_OUTPUT_6_1_EXPECTED == TEST_FORMAT_TEXT_OUTPUT_6_1_RESULT
+
+    TEST_FORMAT_TEXT_OUTPUT_6_2_RESULT = format_text_output(
+        output_result={
+            "message": "Test message header",
+            "items": [
+                {
+                    "name": "test username 1",
+                    "congratulation": "2024-12-28",
+                    "congratulation_actual": "2024-12-30",
+                }
+            ],
+        },
+    )
+    TEST_FORMAT_TEXT_OUTPUT_6_2_EXPECTED = (
+        "Test message header:\n"
+        "  test username 1 : 28.12.2024 (moved to closest weekday from 30.12.2024)"
+    )
+    assert TEST_FORMAT_TEXT_OUTPUT_6_2_EXPECTED == TEST_FORMAT_TEXT_OUTPUT_6_2_RESULT
+
+    TEST_FORMAT_TEXT_OUTPUT_6_3_RESULT = format_text_output(
+        output_result={
+            "message": "Test message header",
+            "items": [
+                {
+                    "name": "test username 1",
+                    "congratulation": "2024-12-23",
+                },
+                {
+                    "name": "test username 1",
+                    "congratulation": "2024-12-28",
+                    "congratulation_actual": "2024-12-30",
+                },
+            ],
+        },
+    )
+    TEST_FORMAT_TEXT_OUTPUT_6_3_EXPECTED = (
+        "Test message header:\n"
+        "  test username 1 : 23.12.2024\n"
+        "  test username 1 : 28.12.2024 (moved to closest weekday from 30.12.2024)"
+    )
+    assert TEST_FORMAT_TEXT_OUTPUT_6_3_EXPECTED == TEST_FORMAT_TEXT_OUTPUT_6_3_RESULT
+
+    TEST_FORMAT_TEXT_OUTPUT_6_4_RESULT = format_text_output(
+        output_result={
+            "message": "Test message header",
+            "items": [
+                {
+                    "name": "test username 1",
+                    "congratulation": "2024-12-23",
+                },
+                {
+                    "name": "test username 1",
+                    "congratulation": "2024-12-28",
+                    "congratulation_actual": "2024-12-30",
+                },
+            ],
+        },
+        lines_offset="👤 ",
+    )
+    TEST_FORMAT_TEXT_OUTPUT_6_4_EXPECTED = (
+        "Test message header:\n"
+        "👤 test username 1 : 23.12.2024\n"
+        "👤 test username 1 : 28.12.2024 (moved to closest weekday from 30.12.2024)"
+    )
+    assert TEST_FORMAT_TEXT_OUTPUT_6_4_EXPECTED == TEST_FORMAT_TEXT_OUTPUT_6_4_RESULT
+
+    print("Text Utils tests passed.")
