@@ -21,8 +21,6 @@ from validators.contact_validators import (
     ensure_contact_is_in_contacts_storage,
 )
 
-MSG_FOUND_MATCHES = "Found {0} match{1}"
-
 
 class AddressBook(UserDict):
     """
@@ -381,7 +379,7 @@ if __name__ == "__main__":
     test_match_book_2.add_record(test_match_record_3)
 
     TEST_MATCH_OUTPUT_TEXT = (
-        f"{MSG_FOUND_MATCHES.format(2, 'es')} for '{TEST_MATCH_USERNAME_TERM}':\n"
+        f"Found 2 matches for '{TEST_MATCH_USERNAME_TERM}':\n"
         "  Alex  : 9875554446\n"
         "  Alice : 1234567890"
     )

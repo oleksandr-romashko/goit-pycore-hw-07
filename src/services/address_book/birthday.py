@@ -83,7 +83,7 @@ if __name__ == "__main__":
         Birthday(TEST_DATE_STR_WITH_INVALID_FORMAT)
     except ValidationError as exc:
         TEST_ERR_MSG_INVALID_DATE_FORMAT_WHEN_INIT = (
-            f"Invalid provided date format '{TEST_DATE_STR_WITH_INVALID_FORMAT}'. "
+            f"Invalid date format '{TEST_DATE_STR_WITH_INVALID_FORMAT}'. "
             f"Use {DATE_FORMAT_STR_REPRESENTATION} format."
         )
         assert str(exc) == TEST_ERR_MSG_INVALID_DATE_FORMAT_WHEN_INIT
@@ -107,7 +107,7 @@ if __name__ == "__main__":
         test_birthday_3.value = TEST_DATE_STR_WITH_INVALID_FORMAT
     except ValidationError as exc:
         TEST_ERR_MSG_INVALID_DATE_FORMAT_WHEN_ASSIGN_VALUE = (
-            f"Invalid provided date format '{TEST_DATE_STR_WITH_INVALID_FORMAT}'. "
+            f"Invalid date format '{TEST_DATE_STR_WITH_INVALID_FORMAT}'. "
             f"Use {DATE_FORMAT_STR_REPRESENTATION} format."
         )
         assert str(exc) == TEST_ERR_MSG_INVALID_DATE_FORMAT_WHEN_ASSIGN_VALUE

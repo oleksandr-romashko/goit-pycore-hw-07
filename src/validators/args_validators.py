@@ -6,6 +6,7 @@ These functions check the number and presence of CLI arguments and types.
 
 from datetime import date
 
+from utils.constants import ERR_ARG_COUNT_ERROR, ERR_TYPE_ERROR
 from validators.errors import ValidationError
 
 
@@ -24,10 +25,11 @@ def ensure_args_have_n_arguments(
         ValidationError: If the number of arguments is incorrect or any are empty.
     """
     if len(args) != expected or not all(arg.strip() for arg in args):
-        msg = f"You must provide {expected} non-empty argument{'s' if expected != 1 else ''}"
-        if details:
-            msg += f" ({details})"
-        msg += "."
+        plural = "s" if expected != 1 else ""
+        details_formatted = f" ({details})" if details else ""
+        msg = ERR_ARG_COUNT_ERROR.format(
+            expected=expected, plural=plural, details=details_formatted
+        )
         raise ValidationError(msg)
 
 
@@ -49,7 +51,7 @@ def validate_argument_type(obj: object, obj_type: any) -> None:
             expected = obj_type.__name__
 
         actual = type(obj).__name__
-        raise TypeError(f"Expected type '{expected}', but received type '{actual}'.")
+        raise TypeError(ERR_TYPE_ERROR.format(expected=expected, actual=actual))
 
 
 if __name__ == "__main__":
@@ -73,4 +75,4 @@ if __name__ == "__main__":
     else:
         assert False, "Should raise TypeError error when type is not of expected types."
 
-    print("Args validator tests passed.")
+    print("Args Validator tests passed.")

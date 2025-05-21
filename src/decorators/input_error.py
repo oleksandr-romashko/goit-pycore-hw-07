@@ -1,6 +1,11 @@
 """
 Provides a decorator for handling common input-related errors in command handlers.
 """
+from utils.constants import (
+    ERR_KEY_ERROR,
+    ERR_INDEX_ERROR,
+    ERR_VALUE_ERROR,
+)
 from validators.errors import ValidationError
 
 
@@ -25,11 +30,11 @@ def input_error(func):
         except ValidationError as exc:
             return str(exc)
         except KeyError:
-            return "Requested item not found."
+            return ERR_KEY_ERROR
         except IndexError:
-            return "Missing or incomplete arguments."
+            return ERR_INDEX_ERROR
         except ValueError:
-            return "Invalid input value."
+            return ERR_VALUE_ERROR
         except TypeError as exc:
             return str(exc)
 

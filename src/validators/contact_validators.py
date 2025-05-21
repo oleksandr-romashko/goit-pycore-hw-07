@@ -11,15 +11,16 @@ validation fails.
 from datetime import date
 
 from services.address_book.phone import Phone
-from validators.errors import ValidationError
+from utils.constants import (
+    MSG_CONTACT_EXISTS,
+    MSG_NO_CONTACTS,
+    MSG_CONTACT_NOT_FOUND,
+    MSG_PHONE_NUMBER_EXISTS,
+    MSG_PHONE_NUMBER_NOT_FOUND,
+    MSG_BIRTHDAY_DUPLICATE,
+)
 from utils.date_utils import format_date_str
-
-MSG_CONTACT_EXISTS = "Contact with username '{0}' already exists"
-MSG_NO_CONTACTS = "You don't have contacts yet, but you can add one anytime."
-MSG_CONTACT_NOT_FOUND = "Contact '{0}' not found"
-MSG_PHONE_NUMBER_EXISTS = "Contact '{0}' has '{1}' phone number already."
-MSG_PHONE_NUMBER_NOT_FOUND = "Phone number '{0}' for contact '{1}' not found."
-MSG_BIRTHDAY_DUPLICATE = "Birthday for '{0}' is already set to '{1}'."
+from validators.errors import ValidationError
 
 
 def ensure_contacts_storage_not_empty(contacts: dict) -> None:

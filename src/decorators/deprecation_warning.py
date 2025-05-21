@@ -1,5 +1,13 @@
+"""
+Decorator to log usage of deprecated or transitional functions.
+
+Intended for marking temporary functions that are planned for removal or refactoring.
+Emits a debug log message each time the function is called.
+"""
 import functools
 import logging
+
+from utils.constants import DEFAULT_TRANSITION_REASON
 
 
 def transition_warning(
@@ -17,7 +25,7 @@ def transition_warning(
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             logging.debug(
-                "[TRANSITION DEBUG] Called deprecated function '%s' - %s",
+                DEFAULT_TRANSITION_REASON,
                 func.__name__,
                 reason,
             )

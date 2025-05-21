@@ -4,15 +4,16 @@ Reusable string utilities for formatting, truncation, and other text operations.
 
 from datetime import date
 
-from utils.constants import DATE_FORMAT_STR_REPRESENTATION, MSG_HAVE_CONTACTS
+from utils.constants import (
+    DATE_FORMAT_STR_REPRESENTATION,
+    DEFAULT_TRUNCATE_LENGTH,
+    DEFAULT_LINE_OFFSET,
+    LINE_VALUE_GROUP_SEPARATION_SYMBOL,
+    LINE_VALUE_LIST_SEPARATION_SYMBOL,
+    MSG_HAVE_CONTACTS,
+    MSG_BIRTHDAY_MOVED,
+)
 from utils.date_utils import format_date_str
-
-DEFAULT_TRUNCATE_LENGTH = 8
-MSG_FORMATTED_LINE = "{offset}{title} : {value}"
-MSG_DEFAULT_LINE_OFFSET = "  "
-MSG_BIRTHDAY_MOVED = "(moved to closest weekday from {0})"
-LINE_VALUE_GROUP_SEPARATION_SYMBOL = ":"
-LINE_VALUE_LIST_SEPARATION_SYMBOL = ","
 
 
 def truncate_string(
@@ -126,7 +127,7 @@ def format_contacts_output(contacts_dict: dict) -> str:
 
 def format_text_output(
     output_result: dict[str, str | list[dict]],
-    lines_offset: str = MSG_DEFAULT_LINE_OFFSET,
+    lines_offset: str = DEFAULT_LINE_OFFSET,
 ) -> str:
     """
     Format the structured result dictionary into a human-readable text output.
