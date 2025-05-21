@@ -4,7 +4,7 @@ Validators for field values (name, phone, etc.).
 Validators raise ValidationError with descriptive messages if validation fails.
 """
 import re
-from datetime import date
+from datetime import date as datetime_day
 
 from utils.constants import (
     NAME_MIN_LENGTH,
@@ -43,7 +43,9 @@ def validate_username_length(username: str) -> None:
 
     if len(username) > NAME_MAX_LENGTH:
         truncated_username = truncate_string(
-            username, max_length=MAX_DISPLAY_NAME_LEN, include_suffix_in_max_length=True
+            username,
+            max_length=MAX_DISPLAY_NAME_LEN,
+            include_suffix_in_text_max_length=True,
         )
         err_msg_too_long = (
             f"Username '{truncated_username}' is too long "
@@ -76,7 +78,7 @@ def validate_phone_number(phone: str) -> None:
         )
 
 
-def validate_date_format(value: str) -> date:
+def validate_date_format(value: str) -> datetime_day:
     """
     Validates and parses a date string into a date object.
 
@@ -98,7 +100,7 @@ def validate_date_format(value: str) -> date:
         raise ValidationError(f"{cause} {tip}") from exc
 
 
-def validate_birthday_is_in_the_past(birthday: date) -> None:
+def validate_birthday_is_in_the_past(date: str) -> None:
     """
     Validates that the given birthday date passed or is today.
 
@@ -109,8 +111,8 @@ def validate_birthday_is_in_the_past(birthday: date) -> None:
         ValidationError: If the birthday is in the future.
     """
     today = date.today()
-    if birthday > today:
-        birthday_str = format_date_str(birthday)
+    if date > today:
+        birthday_str = format_date_str(date)
         raise ValidationError(
             f"Given birthday date '{birthday_str}' can't be in the future."
         )
