@@ -43,3 +43,6 @@ MAX_DISPLAY_NAME_LEN = 15
 PHONE_FORMAT_DESC_STR = "10 digits, optionally starting with '+'"
 DATE_FORMAT = "%d.%m.%Y"
 DATE_FORMAT_STR_REPRESENTATION = "DD.MM.YYYY"
+
+# Messages
+MSG_HAVE_CONTACTS = "You have {0} contact{1}"
