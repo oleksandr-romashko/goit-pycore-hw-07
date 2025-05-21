@@ -4,7 +4,7 @@ Reusable string utilities for formatting, truncation, and other text operations.
 
 from datetime import date
 
-from utils.constants import DATE_FORMAT_STR_REPRESENTATION
+from utils.constants import DATE_FORMAT_STR_REPRESENTATION, MSG_HAVE_CONTACTS
 from utils.date_utils import format_date_str
 
 DEFAULT_TRUNCATE_LENGTH = 8
@@ -90,6 +90,38 @@ def truncate_string(
     string_slice_end = max_length - suffix_length
     sliced_string = string[:string_slice_end]
     return f"{sliced_string}{suffix}"
+
+
+def format_contacts_output(contacts_dict: dict) -> str:
+    """
+    Formats the contact dictionary into a readable string.
+
+    Args:
+        contacts_dict (dict): A dictionary of contacts with their details.
+
+    Returns:
+        str: Formatted string output.
+    """
+    # Format output header and aligned lines
+    count = len(contacts_dict)
+    suffix = "" if count == 1 else "s"
+    header = MSG_HAVE_CONTACTS.format(count, suffix)
+
+    # Format output aligned lines
+    items = []
+    for name, details in contacts_dict.items():
+        items.append(
+            {
+                "name": name,
+                "phones": details.get("phones", []),
+                "birthday": details.get("birthday"),
+            }
+        )
+
+    # Sort by name (case-insensitive)
+    items = sorted(items, key=lambda item: item["name"].casefold())
+
+    return format_text_output(output_result={"message": header, "items": items})
 
 
 def format_text_output(
