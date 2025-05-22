@@ -413,7 +413,7 @@ if __name__ == "__main__":
         },
     )
     TEST_FORMAT_TEXT_OUTPUT_3_2_EXPECTED = (
-        "Test message header:\n" "  test username : phones "
+        "Test message header:\n  test username : phones "
     )
     assert TEST_FORMAT_TEXT_OUTPUT_3_2_EXPECTED == TEST_FORMAT_TEXT_OUTPUT_3_2_RESULT
 
@@ -429,7 +429,7 @@ if __name__ == "__main__":
         },
     )
     TEST_FORMAT_TEXT_OUTPUT_3_3_EXPECTED = (
-        "Test message header:\n" "  test username : phones 1234567890"
+        "Test message header:\n  test username : phones 1234567890"
     )
     assert TEST_FORMAT_TEXT_OUTPUT_3_3_EXPECTED == TEST_FORMAT_TEXT_OUTPUT_3_3_RESULT
 
@@ -445,7 +445,7 @@ if __name__ == "__main__":
         },
     )
     TEST_FORMAT_TEXT_OUTPUT_3_4_EXPECTED = (
-        "Test message header:\n" "  test username : phones 1234567890, 0987654321"
+        "Test message header:\n  test username : phones 1234567890, 0987654321"
     )
     assert TEST_FORMAT_TEXT_OUTPUT_3_4_EXPECTED == TEST_FORMAT_TEXT_OUTPUT_3_4_RESULT
 
@@ -536,7 +536,7 @@ if __name__ == "__main__":
         },
     )
     TEST_FORMAT_TEXT_OUTPUT_6_1_EXPECTED = (
-        "Test message header:\n" "  test username 1 : 23.12.2024"
+        "Test message header:\n  test username 1 : 23.12.2024"
     )
     assert TEST_FORMAT_TEXT_OUTPUT_6_1_EXPECTED == TEST_FORMAT_TEXT_OUTPUT_6_1_RESULT
 
