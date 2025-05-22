@@ -14,11 +14,47 @@ Functions:
 - show_phone(search_term, book): Shows the phone number(s) of a matching contact.
 - show_all(book): Shows all saved contacts.
 """
+from datetime import date as datetime_date
+
 from services.address_book.address_book import AddressBook
 from services.address_book.record import Record
+from utils.constants import (
+    MSG_CONTACT_ADDED,
+    MSG_CONTACT_UPDATED,
+    MSG_CONTACT_DELETED,
+    MSG_PHONE_ADDED,
+    MSG_PHONE_UPDATED,
+    MSG_PHONE_DELETED,
+    MSG_SHOW_NO_MATCHES,
+    MSG_SHOW_FOUND_MATCHES,
+    MSG_BIRTHDAY_ADDED,
+    MSG_BIRTHDAY_UPDATED,
+    MSG_BIRTHDAY_NO_BIRTHDAY,
+    MSG_BIRTHDAY_UPCOMING_PERIOD_STR,
+    MSG_BIRTHDAYS_NO_UPCOMING,
+    MSG_BIRTHDAYS_FOUND_MATCHES,
+)
+from validators.contact_validators import ensure_contacts_storage_not_empty
 
 
-def add_contact(username: str, phone_number: str, book: AddressBook) -> str:
+def show_all(book: AddressBook) -> dict[str, str | list[dict[str, str]]]:
+    """
+    Return all contacts in the address book with their phone numbers.
+
+    Args:
+        book (AddressBook): The address book instance.
+
+    Raises:
+        ValidationError: If address book is empty.
+
+    Returns:
+        dict[str, str | list[dict[str, str]]]: All contacts as structured data.
+    """
+    ensure_contacts_storage_not_empty(book)
+    return book.to_dict()
+
+
+def add_contact(username: str, phone_number: str, book: AddressBook) -> dict[str, str]:
     """
     Add a new contact with a phone number, or append the phone if the contact already exists.
 
@@ -28,21 +64,28 @@ def add_contact(username: str, phone_number: str, book: AddressBook) -> str:
         book (AddressBook): The address book instance to update.
 
     Returns:
-        str: Result message indicating success or duplication.
+        dict[str, str]: Message indicating result.
     """
-    record: Record = book.get(username)
+    contact = book.get(username)
 
-    if not record:
-        record = Record(username)
-        record.add_phone(phone_number)
-        return book.add_record(record)
+    if contact:
+        contact.add_phone(phone_number)
+        return {
+            "message": f"{MSG_CONTACT_UPDATED} {MSG_PHONE_ADDED}",
+        }
 
-    return record.add_phone(phone_number)
+    contact = Record(username)
+    contact.add_phone(phone_number)
+    book.add_record(contact)
+
+    return {
+        "message": MSG_CONTACT_ADDED,
+    }
 
 
 def change_contact(
     username: str, prev_phone_number: str, new_phone_number: str, book: AddressBook
-) -> str:
+) -> dict[str, str]:
     """
     Update an existing contact's phone number.
 
@@ -53,13 +96,35 @@ def change_contact(
         book (AddressBook): The address book instance containing the contact.
 
     Returns:
-        str: Result message from the phone update operation.
+        dict[str, str]: Message indicating result.
     """
-    record = book.find(username)
-    return record.edit_phone(prev_phone_number, new_phone_number)
+    contact = book.find(username)
+    contact.edit_phone(prev_phone_number, new_phone_number)
+
+    return {
+        "message": MSG_PHONE_UPDATED,
+    }
 
 
-def show_phone(search_term: str, book: AddressBook) -> str:
+def delete_contact(username: str, book: AddressBook) -> dict[str, str]:
+    """
+    Deletes a contact by name from the address book.
+
+    Args:
+        username (str): The name of the contact to delete.
+        book (AddressBook): The address book instance.
+
+    Returns:
+        dict[str, str]: Message indicating result.
+    """
+    book.delete(username)
+
+    return {
+        "message": MSG_CONTACT_DELETED,
+    }
+
+
+def show_phone(search_term: str, book: AddressBook) -> dict[str, str | list[dict]]:
     """
     Retrieve the phone number(s) for a contact matching the search term.
 
@@ -70,12 +135,58 @@ def show_phone(search_term: str, book: AddressBook) -> str:
         book (AddressBook): The address book instance to search.
 
     Returns:
-        str: Matching contact(s) and phone number(s) as string.
+        dict: Matching contact(s) and phone number(s) as structured data.
     """
-    return book.find_match(search_term)
+    matches = book.find_match(search_term)
+
+    if not matches:
+        return {
+            "message": MSG_SHOW_NO_MATCHES,
+        }
+
+    # Sort found matches alphabetically by name
+    matches.sort(key=lambda record: record.name.value.casefold())
+
+    # Form return dictionary object
+    count = len(matches)
+    suffix = "" if count == 1 else "es"
+    search_prompt = f"{search_term}" if search_term else "empty search"
+    message = f"{MSG_SHOW_FOUND_MATCHES.format(count, suffix)} for '{search_prompt}'"
+    items = [
+        {"name": record.name.value, "phones": [phone.value for phone in record.phones]}
+        for record in matches
+    ]
+
+    return {
+        "message": message,
+        "items": items,
+    }
 
 
-def add_birthday(username: str, date: str, book: AddressBook) -> str:
+def remove_phone(username: str, phone_number: str, book: AddressBook) -> dict[str, str]:
+    """
+    Remove a phone number from a contact in the address book.
+
+    Args:
+        username (str): The name of the contact whose phone number is to be removed.
+        phone_number (str): The phone number to remove from the contact.
+        book (AddressBook): The address book containing the contact.
+
+    Raises:
+        ValueError: If the phone number is not found in the contact's list.
+
+    Returns:
+        dict[str, str]: Message indicating result.
+    """
+    contact = book.find(username)
+    contact.remove_phone(phone_number)
+
+    return {
+        "message": f"{MSG_CONTACT_UPDATED} {MSG_PHONE_DELETED}",
+    }
+
+
+def add_birthday(username: str, date: str, book: AddressBook) -> dict[str, str]:
     """
     Add a birthday to the specified contact.
 
@@ -85,13 +196,26 @@ def add_birthday(username: str, date: str, book: AddressBook) -> str:
         book (AddressBook): Address book instance.
 
     Returns:
-        str: Result message indicating success on add or update operation.
+        dict[str, str]: Message indicating result.
     """
-    # TODO: Implement logic to parse date and assign birthday to contact
-    pass
+    contact = book.find(username)
+    was_empty = contact.birthday is None
+
+    contact.add_birthday(date)
+
+    if was_empty:
+        return {
+            "message": MSG_BIRTHDAY_ADDED,
+        }
+
+    return {
+        "message": MSG_BIRTHDAY_UPDATED,
+    }
 
 
-def show_birthday(username: str, book: AddressBook) -> str:
+def show_birthday(
+    username: str, book: AddressBook
+) -> dict[str, str | list[dict[str, str]]]:
     """
     Retrieve the birthday of the specified contact.
 
@@ -100,13 +224,28 @@ def show_birthday(username: str, book: AddressBook) -> str:
         book (AddressBook): Address book instance.
 
     Returns:
-        str: Birthday string.
+        dict: Standardized output containing header and optional items.
     """
-    # TODO: Implement logic to fetch and return birthday
-    pass
+    contact = book.find(username)
+
+    if not contact.birthday:
+        return {
+            "message": MSG_BIRTHDAY_NO_BIRTHDAY.format(username),
+        }
+
+    items = [
+        {
+            "name": username,
+            "birthday": contact.birthday.value.isoformat(),
+        }
+    ]
+
+    return {
+        "items": items,
+    }
 
 
-def show_upcoming_birthday(book: AddressBook) -> str:
+def show_upcoming_birthdays(book: AddressBook) -> dict[str, str | datetime_date]:
     """
     Retrieve birthdays occurring in the next 7 days.
 
@@ -114,20 +253,41 @@ def show_upcoming_birthday(book: AddressBook) -> str:
         book (AddressBook): Address book instance.
 
     Returns:
-        str: Formatted list of upcoming birthdays.
+        dict[str, str]: Message indicating upcoming birthday result.
     """
-    # TODO: Implement logic to find and display upcoming birthdays
-    pass
+    matches = book.get_upcoming_birthdays()
 
+    if not matches:
+        return {
+            "message": MSG_BIRTHDAYS_NO_UPCOMING.format(
+                MSG_BIRTHDAY_UPCOMING_PERIOD_STR
+            ),
+        }
 
-def show_all(book: AddressBook) -> str:
-    """
-    Return all contacts in the address book with their phone numbers.
+    # Form return dictionary object
+    count = len(matches)
+    suffix = "" if count == 1 else "s"
+    message = MSG_BIRTHDAYS_FOUND_MATCHES.format(
+        count, suffix, MSG_BIRTHDAY_UPCOMING_PERIOD_STR
+    )
+    items = [
+        {
+            "name": match.get("name"),
+            "congratulation": (
+                match.get("congratulation").isoformat()
+                if match.get("congratulation")
+                else ""
+            ),
+            "congratulation_actual": (
+                match.get("congratulation_actual").isoformat()
+                if match.get("congratulation_actual")
+                else ""
+            ),
+        }
+        for match in matches
+    ]
 
-    Args:
-        book (AddressBook): The address book instance.
-
-    Returns:
-        str: All contacts as a formatted string.
-    """
-    return str(book)
+    return {
+        "message": message,
+        "items": items,
+    }
