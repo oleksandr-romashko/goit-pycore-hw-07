@@ -6,6 +6,7 @@ from colorama import init, Style
 
 from config import DEBUG
 
+from cli.command import Command
 from cli.command_handlers import (
     handle_hello,
     handle_all,
@@ -22,14 +23,15 @@ from cli.command_handlers import (
 from decorators.keyboard_interrupt_error import keyboard_interrupt_error
 from services.address_book.address_book import AddressBook
 from utils.constants import (
-    WELCOME_MESSAGE_TITLE,
-    WELCOME_MESSAGE_SUBTITLE,
-    INPUT_PROMPT,
-    INVALID_EMPTY_COMMAND_MESSAGE,
+    MSG_WELCOME_MESSAGE_TITLE,
+    MSG_WELCOME_MESSAGE_SUBTITLE,
+    MSG_INPUT_PROMPT,
     MENU_HELP_STR,
+    MSG_INVALID_EMPTY_COMMAND,
 )
 from utils.input_parser import parse_input
 from utils.log_config import init_logging
+
 
 # Initialize the environment
 init_logging(logging.DEBUG if DEBUG else logging.INFO)  # Logging
@@ -38,14 +40,14 @@ init(autoreset=True)  # Colorama for Windows compatibility
 
 def print_greeting(help_text: str = "") -> None:
     """Print the welcome message and optional help text."""
-    print(Style.BRIGHT + f"\n{WELCOME_MESSAGE_TITLE}".upper())
-    print(f"\n{WELCOME_MESSAGE_SUBTITLE}:")
+    print(Style.BRIGHT + f"\n{MSG_WELCOME_MESSAGE_TITLE}".upper())
+    print(f"\n{MSG_WELCOME_MESSAGE_SUBTITLE}:")
     print(f"\n{help_text}")
 
 
 def get_user_input() -> str:
     """Prompt the user for a command and return the input string."""
-    return input(f"\n{INPUT_PROMPT}: ")
+    return input(f"\n{MSG_INPUT_PROMPT}: ")
 
 
 @keyboard_interrupt_error(handle_exit)
@@ -65,7 +67,7 @@ def main():
         # Read user input
         user_input = get_user_input()
         if not user_input:
-            print(f"{INVALID_EMPTY_COMMAND_MESSAGE}.")
+            print(f"{MSG_INVALID_EMPTY_COMMAND}.")
             continue
 
         # Get command and arguments from input string
@@ -73,25 +75,25 @@ def main():
 
         # Match input command with one from the menu
         match command:
-            case "hello":
+            case Command.HELLO:
                 print(handle_hello())
-            case "all":
+            case Command.ALL:
                 print(handle_all(book))
-            case "add":
+            case Command.ADD:
                 print(handle_add(args, book))
-            case "change":
+            case Command.CHANGE:
                 print(handle_change(args, book))
-            case "phone":
+            case Command.PHONE:
                 print(handle_phone(args, book))
-            case "add-birthday":
+            case Command.ADD_BIRTHDAY:
                 print(handle_add_birthday(args, book))
-            case "show-birthday":
+            case Command.SHOW_BIRTHDAY:
                 print(handle_show_birthday(args, book))
-            case "birthdays":
+            case Command.BIRTHDAYS:
                 print(handle_birthdays(book))
-            case "help":
+            case Command.HELP:
                 print(handle_help())
-            case "close" | "exit":
+            case Command.CLOSE | Command.EXIT:
                 # Terminates the application
                 handle_exit()
             case _:
@@ -109,7 +111,7 @@ def main_alternative():
     book = AddressBook()
 
     menu = {
-        "hello": {
+        Command.HELLO: {
             # Help for the menu item structure:
             # A string showing expected arguments help text
             # in <command> (required argument)
@@ -122,58 +124,58 @@ def main_alternative():
             "handler": lambda _, __: handle_hello(),
             "visible": True,
         },
-        "all": {
+        Command.ALL: {
             "args_str": "",
             "description": "Display all contacts",
             "handler": lambda _, book: handle_all(book),
             "visible": True,
         },
-        "add": {
+        Command.ADD: {
             "args_str": "<name> <phone>",
             "description": "Add a new contact or add phone to the existing one",
             "handler": handle_add,
             "visible": True,
         },
-        "change": {
+        Command.CHANGE: {
             "args_str": "<name> <old_phone> <new_phone>",
             "description": "Update contact's phone number",
             "handler": handle_change,
             "visible": True,
         },
-        "phone": {
+        Command.PHONE: {
             "args_str": "<name>",
             "description": "Show contact's phone number",
             "handler": handle_phone,
             "visible": True,
         },
-        "add-birthday": {
+        Command.ADD_BIRTHDAY: {
             "args_str": "<name> <birthday_date>",
             "description": "Add a birthday to the specified contact",
             "handler": handle_add_birthday,
             "visible": True,
         },
-        "show-birthday": {
+        Command.SHOW_BIRTHDAY: {
             "args_str": "<name>",
             "description": "Show the birthday of the specified contact",
             "handler": handle_show_birthday,
             "visible": True,
         },
-        "birthdays": {
+        Command.BIRTHDAYS: {
             "args_str": "",
             "description": "Show upcoming birthdays within the next 7 days",
             "handler": lambda _, book: handle_birthdays(book),
             "visible": True,
         },
-        "help": {
+        Command.HELP: {
             "args_str": "",
             "description": "Show available commands",
             "handler": lambda _, __: help_text,
             "visible": True,
         },
-        "exit": {
+        Command.EXIT: {
             # Aliases as possible alternative commands,
             # e.g., 'exit' can also be triggered by 'close'
-            "aliases": ["close"],
+            "aliases": [Command.CLOSE],
             "args_str": "",
             "description": "Exit the app",
             "handler": lambda _, __: handle_exit(),
@@ -240,7 +242,8 @@ def main_alternative():
             return cmd
         # Resolve aliases
         for key, meta in menu.items():
-            if cmd in meta.get("aliases", []):
+            aliases = [alias.lower() for alias in meta.get("aliases", [])]
+            if cmd in aliases:
                 return key
         # Fallback if command not found
         return ""
@@ -254,11 +257,14 @@ def main_alternative():
         # Read user input
         user_input = get_user_input()
         if not user_input:
-            print(f"{INVALID_EMPTY_COMMAND_MESSAGE}.")
+            print(f"{MSG_INVALID_EMPTY_COMMAND}.")
             continue
 
         # Get command and arguments from input string
         command, args = parse_input(user_input)
+
+        # Make Command Case-Insensitive
+        command = command.lower()
 
         # Match input command with command from the menu
         command = resolve_command(command)
