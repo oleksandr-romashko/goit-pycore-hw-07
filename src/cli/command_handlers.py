@@ -142,14 +142,14 @@ def handle_show_birthday(args: list[str], book: dict) -> str:
 
 @input_error
 def handle_birthdays(book: dict) -> str:
-    """Displays all birthdays occurring in the upcoming 7 days."""
+    """Displays all birthdays occurring in the upcoming week."""
     # No validation checks here
     result = show_upcoming_birthdays(book)
     return format_text_output(result)
 
 
 def handle_help() -> str:
-    """Returns the help menu."""
+    """Returns formatted help menu."""
     # No validation here
     return MENU_HELP_STR
 

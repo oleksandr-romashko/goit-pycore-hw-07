@@ -247,7 +247,7 @@ def show_birthday(
 
 def show_upcoming_birthdays(book: AddressBook) -> dict[str, str | datetime_date]:
     """
-    Retrieve birthdays occurring in the next 7 days.
+    Retrieve birthdays occurring in the upcoming week.
 
     Args:
         book (AddressBook): Address book instance.
