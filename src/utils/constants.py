@@ -21,6 +21,7 @@ MSG_INPUT_PROMPT = f"Enter a command (or {MSG_HELP_AWARE_TIP})"
 
 # === Help Menu ===
 
+# Menu
 MENU_HELP_STR = """hello                                 - Greet the user
 all                                   - Display all contacts
 add <name> <phone>                    - Add a new contact or add phone to the existing one
@@ -28,8 +29,8 @@ change <name> <old_phone> <new_phone> - Update contact's phone number
 phone <name>                          - Show contact's phone number
 add-birthday <name> <birthday_date>   - Add a birthday to the specified contact
 show-birthday <name>                  - Show the birthday of the specified contact
-birthdays                             - Show upcoming birthdays within the next 7 days
-help                                  - Show available commands
+birthdays                             - Show upcoming birthdays within the upcoming week
+help                                  - Show available commands (this menu)
 exit (or close)                       - Exit the app"""
 
 # === Date & Format Constants ===
