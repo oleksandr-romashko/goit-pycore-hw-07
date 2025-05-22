@@ -1,33 +1,40 @@
 # Python Programming: Foundations and Best Practices 2.0
 
-### [# goit-pycore-hw-06](https://github.com/topics/goit-pycore-hw-06)
+### [# goit-pycore-hw-07](https://github.com/topics/goit-pycore-hw-07)
 
 <p align="center">
   <img align="center" src="./assets/thumbnail.svg" width="200" title="Project thumbnail" alt="project thumbnail">
 </p>
 
 
-## Basic OOP in Python
+## Special methods for object manipulations
+
+This task is a follow-up of the previous task **[CLI assistant bot](https://github.com/oleksandr-romashko/goit-pycore-hw-06)**, extended by adding storage of multiple phones and a birthday date in a contact.
 
 <details>
 
 <summary><h3 style="display: inline-block">Project Setup & Run Instructions</h3></summary>
 
 ##### Table of Contents
-- [Prerequisites](#setup-prerequisites)
-- [Setting Up the Development Environment](#setup-setting-up-environment)
-  - [Clone the Repository](#setup-clone-repository)
-  - [Create a Virtual Environment](#setup-create-virtual-environment)
-- [Running the Project](#setup-running-the-project)
-  - [Running the Tasks in VS Code](#setup-running-vs-code)
-  - [Running the Tasks from the Command Line](#setup-running-command-line)
-  - [Running Tasks with Scripts](#setup-running-script)
+- [Python Programming: Foundations and Best Practices 2.0](#python-programming-foundations-and-best-practices-20)
+    - [# goit-pycore-hw-07](#-goit-pycore-hw-07)
+  - [Special methods for object manipulations](#special-methods-for-object-manipulations)
+        - [Table of Contents](#table-of-contents)
+      - [Prerequisites](#prerequisites)
+      - [Setting Up the Development Environment](#setting-up-the-development-environment)
+      - [Running the Project](#running-the-project)
+      - [Task description:](#task-description)
+      - [Solution:](#solution)
+      - [Task requirements:](#task-requirements)
+        - [Task 1](#task-1)
+        - [Task 2](#task-2)
+      - [Evaluation criteria:](#evaluation-criteria)
 
 #### <a name="setup-prerequisites"></a>Prerequisites
 
 Before starting, ensure that you have the following installed:
 
-* [Python 3.7+](https://www.python.org/downloads/) (Make sure python (`python --version` or `python3 --version`) and pip (`python -m pip --version` or `python3 -m pip --version`) are available in your terminal)
+* [Python 3.11+](https://www.python.org/downloads/) (Make sure python (`python --version` or `python3 --version`) and pip (`python -m pip --version` or `python3 -m pip --version`) are available in your terminal)
 * [Git](https://git-scm.com/downloads) (optional, for version control)
 
 #### <a name="setup-setting-up-environment"></a>Setting Up the Development Environment
@@ -129,46 +136,29 @@ Once your virtual environment is set up, you can run the application code.
 
 <summary><h3 style="display: inline-block; word-break: break-all;">Solution - Introduce OOP to the Console Assistant Bot</h3></summary>
 
-This task is a follow-up of the previous task **[CLI assistant bot](https://github.com/oleksandr-romashko/goit-pycore-hw-05)**, extended by adding OOP related with data and their processing (how data are stored, what data and what we may do with them).
-
 #### <a name="assignment-task-description"></a>Task description:
 
-Implement Address Book Management System using OOP classes.
+Add multiple phones per contacts and birthday congratulations to the Address Book Management System.
 
 #### <a name="assignment-solution"></a>Solution:
 
-Solution for this assignment is located in the [src/address_book](./src/address_book) folder and implemented in the following files:
-* [AddressBook](./src/address_book/address_book.py) class - stores `Record`'s:
-  Functionality:
-  * add a `Record` using `add_record` method
-  * search for the `Record` using `find` method
-  * delete `Record` using `delete` method
-* [Record](./src/address_book/record.py) class - stores contact information (`Name` (required) and list of `Phone` objects):
-  Functionality:
-  * add phone numbers
-  * delete phone numbers
-  * editing phone numbers
-  * find phone number
-* [Field](./src/address_book/field.py) class - basic class for `Record` class fields
-* [Name](./src/address_book/name.py) class - class to store contact username.
-* [Phone](./src/address_book/phone.py) - class to store contact phone number.
-* Additional validation checks serving as guards during data processing:
-  * [ValidationError](./src/validators/errors.py) - Custom error for validation problems, inherited from ValueError.
-  * [args_validators.py](./src/validators/args_validators.py) - Validators for command-line argument structure before further operations.
-  * [contact_validators.py](./src/validators/contact_validators.py) - Validators for contact management commands.
-  * [field_validators.py](./src/validators/field_validators.py) - Validators for field values (name, phone, etc.).
+Solution for this assignment is located in the following files:
+* [main.py](./src/main.py) class - main entry point, presentation layer
+* [command_handlers.py](./src/cli/command_handlers.py) - module handles commands, presentation layer
+* [contacts_manager.py](./src/services/contacts_manager.py) - service layer module handling requests from the presentation layer and managing model classes.
+* [address_book](./src/services/address_book/) - package containing model layer classes, like [AddressBook](./src/services/address_book/address_book.py), [Record](./src/services/address_book/record.py), etc.
 
 UML Class Diagram of the solution (created using [Star UML](https://staruml.io/) tool, source file is located [here](./assets/uml/class_diagram-star-uml.mdj)):
 
 ![UML Class Diagram](./assets/uml/class-diagram.jpg)
 
+UML Sequence Diagram and estimation of unified generalized application flow (created using [Star UML](https://staruml.io/) tool, source file is located [here](./assets/uml/class_diagram-star-uml.mdj)):
+
+![UML Class Diagram](./assets/uml/sequence-diagram.jpg)
+
 Result screenshot - Task solution (launched in the typical mode - menu handling using match case):
 
-![task 4 typical solution screenshot](./assets/results/task_4_typical_solution.png)
-
-Result screenshot - Task solution (Launched in the alternative mode - Data-Driven Menu):
-
-![task 4 alternative solution screenshot](./assets/results/task_4_alternative_solution.png)
+![task solution terminal screenshot](./assets/results/task_4_typical_solution.png)
 
 </details>
 
@@ -178,100 +168,60 @@ Result screenshot - Task solution (Launched in the alternative mode - Data-Drive
 
 #### <a name="assignment-task-requirements"></a>Task requirements:
 
-Entities (Classes to Implement):
+##### Task 1
 
-* `Field`: Base class for record fields.
-* `Name`: Class to store the contact's name (required field).
-* `Phone`: Class to store a contact's phone number. Includes validation: must have exactly 10 digits.
-* `Record`: Class to store a contact's information, incl. a name and phones list.
-* `AddressBook`: Class to store and manage multiple Record objects.
+Extend the functionality of the classes from the previous solution:
 
-Required Functionality:
-* `AddressBook`:
-  * Add a Record.
-  * Find a Record by name.
-  * Delete a Record by name.
-* `Record`:
-  * Add a new Phone.
-  * Remove a Phone.
-  * Edit an existing Phone.
-  * Find a specific Phone.
+* Add a `birthday` field to the `Record` class. This field should be of type `Birthday`. It is optional but can exist only once.
+* Implement support for the `Birthday` field in the `Record` class, specifically the `add_birthday` method to add a birthday to a contact.
+* Implement validation logic for correct values in the `Phone` and `Birthday` fields.
+* Adapt and add the `get_upcoming_birthdays` function (from before) to the `AddressBook` class. This function should return a list of users who should be congratulated in the upcoming week.
+* Now bot should work using the functionality of the `AddressBook` class. This means we no longer use a simple dictionary like `contacts`, but instead instantiate the address book with:
+  ```python
+  book = AddressBook()
+  ```
 
-#### <a name="assignment-recommendations-to-the-implementation"></a>Recommendations to the implementation:
+##### Task 2
 
-Provided Starter Code:
+Implement the new functionality, add handler functions for the following commands:
+* `add-birthday`: Adds a birthday to a contact. The format is `DD.MM.YYYY`.
+* `show-birthday`: Displays a contact’s birthday.
+* `birthdays`: Returns a list of users with upcoming birthdays in the next week.
+  ```python
+  @input_error
+  def add_birthday(args, book):
+      # Implementation
 
-```python
-from collections import UserDict
+  @input_error
+  def show_birthday(args, book):
+      # Implementation
 
-class Field:
-    def __init__(self, value):
-        self.value = value
+  @input_error
+  def birthdays(args, book):
+      # Implementation
+  ```
 
-    def __str__(self):
-        return str(self.value)
+**Final Supported Bot Commands**
 
-class Name(Field):
-    pass
-
-class Phone(Field):
-    pass
-
-class Record:
-    def __init__(self, name):
-        self.name = Name(name)
-        self.phones = []
-
-    def __str__(self):
-        return f"Contact name: {self.name.value}, phones: {'; '.join(p.value for p in self.phones)}"
-
-class AddressBook(UserDict):
-    pass
-```
-
-Example How Your Code Should Behave:
-
-```python
-book = AddressBook()
-
-john_record = Record("John")
-john_record.add_phone("1234567890")
-john_record.add_phone("5555555555")
-book.add_record(john_record)
-
-jane_record = Record("Jane")
-jane_record.add_phone("9876543210")
-book.add_record(jane_record)
-
-for name, record in book.data.items():
-    print(record)
-
-john = book.find("John")
-john.edit_phone("1234567890", "1112223333")
-print(john)
-
-found_phone = john.find_phone("5555555555")
-print(f"{john.name}: {found_phone}")
-
-book.delete("Jane")
-```
+The bot should support the following list of commands:
+1. `add [name] [phone]`: Add a new contact with name and phone number, or add a new phone to an existing contact
+2. `change [name] [old phone] [new phone]`: Change the phone number for a contact.
+3. `phone [name]`: Show all phone numbers for a contact.
+4. `all`: Show all contacts in the address book.
+5. `add-birthday [name] [birth date]`: Add a birthday for the specified contact.
+6. `show-birthday [name]`: Show the birthday for the specified contact.
+7. `birthdays`: Show upcoming birthdays within the next 7 days.
+8. `hello`: Get a greeting from the bot.
+9. `close` or `exit`: Exit the program.
 
 #### <a name="assignment-evaluation-criteria"></a>Evaluation criteria:
 
-Class `AddressBook`:
-
-* Implemented `add_record`, that adds to self.data
-* Implemented `find`, that finds item by name
-* Implemented `delete`, that delets item by name
-
-Class `Record`:
-
-* Implemented `Name` object storage in a separate attribute
-* Implement storage of a list of `Phone` objects in a separate attribute.
-* Implemented methods for adding - `add_phone` / deletion - `remove_phone` / editing - `edit_phone` / search of `Phone` object - `find_phone`.
-
-Class `Phone`:
-
-* Implemented validate that the phone number has exactly 10 digits.
+1. All listed commands must be implemented and work correctly.
+2. Output must be clear and user-friendly.
+3. Errors such as invalid input or missing contact must be handled gracefully and shown with informative messages.
+4. Input validation:
+  - Birthdays must be in the format DD.MM.YYYY.
+  - Phone numbers must contain exactly 10 digits.
+5. The program must shut down cleanly after receiving the close or exit commands.
 
 </details>
