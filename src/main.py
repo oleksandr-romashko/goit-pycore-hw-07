@@ -6,7 +6,6 @@ from colorama import init, Style
 
 from config import DEBUG
 
-from cli.command import Command
 from cli.command_handlers import (
     handle_hello,
     handle_all,
@@ -75,25 +74,25 @@ def main():
 
         # Match input command with one from the menu
         match command:
-            case Command.HELLO:
+            case "hello":
                 print(handle_hello())
-            case Command.ALL:
+            case "all":
                 print(handle_all(book))
-            case Command.ADD:
+            case "add":
                 print(handle_add(args, book))
-            case Command.CHANGE:
+            case "change":
                 print(handle_change(args, book))
-            case Command.PHONE:
+            case "phone":
                 print(handle_phone(args, book))
-            case Command.ADD_BIRTHDAY:
+            case "add-birthday":
                 print(handle_add_birthday(args, book))
-            case Command.SHOW_BIRTHDAY:
+            case "show-birthday":
                 print(handle_show_birthday(args, book))
-            case Command.BIRTHDAYS:
+            case "birthdays":
                 print(handle_birthdays(book))
-            case Command.HELP:
+            case "help":
                 print(handle_help())
-            case Command.CLOSE | Command.EXIT:
+            case "exit" | "close":
                 # Terminates the application
                 handle_exit()
             case _:
@@ -111,7 +110,7 @@ def main_alternative():
     book = AddressBook()
 
     menu = {
-        Command.HELLO: {
+        "hello": {
             # Help for the menu item structure:
             # A string showing expected arguments help text
             # in <command> (required argument)
@@ -124,58 +123,58 @@ def main_alternative():
             "handler": lambda _, __: handle_hello(),
             "visible": True,
         },
-        Command.ALL: {
+        "all": {
             "args_str": "",
             "description": "Display all contacts",
             "handler": lambda _, book: handle_all(book),
             "visible": True,
         },
-        Command.ADD: {
+        "add": {
             "args_str": "<name> <phone>",
             "description": "Add a new contact or add phone to the existing one",
             "handler": handle_add,
             "visible": True,
         },
-        Command.CHANGE: {
+        "change": {
             "args_str": "<name> <old_phone> <new_phone>",
             "description": "Update contact's phone number",
             "handler": handle_change,
             "visible": True,
         },
-        Command.PHONE: {
+        "phone": {
             "args_str": "<name>",
             "description": "Show contact's phone number",
             "handler": handle_phone,
             "visible": True,
         },
-        Command.ADD_BIRTHDAY: {
+        "add-birthday": {
             "args_str": "<name> <birthday_date>",
             "description": "Add a birthday to the specified contact",
             "handler": handle_add_birthday,
             "visible": True,
         },
-        Command.SHOW_BIRTHDAY: {
+        "show-birthday": {
             "args_str": "<name>",
             "description": "Show the birthday of the specified contact",
             "handler": handle_show_birthday,
             "visible": True,
         },
-        Command.BIRTHDAYS: {
+        "birthdays": {
             "args_str": "",
-            "description": "Show upcoming birthdays within the next 7 days",
+            "description": "Show upcoming birthdays within the upcoming week",
             "handler": lambda _, book: handle_birthdays(book),
             "visible": True,
         },
-        Command.HELP: {
+        "help": {
             "args_str": "",
-            "description": "Show available commands",
+            "description": "Show available commands (this menu)",
             "handler": lambda _, __: help_text,
             "visible": True,
         },
-        Command.EXIT: {
+        "exit": {
             # Aliases as possible alternative commands,
             # e.g., 'exit' can also be triggered by 'close'
-            "aliases": [Command.CLOSE],
+            "aliases": ["close"],
             "args_str": "",
             "description": "Exit the app",
             "handler": lambda _, __: handle_exit(),
@@ -238,13 +237,16 @@ def main_alternative():
         Returns:
             str: The matched canonical command string, or an empty string if not recognized.
         """
-        if cmd in menu:
-            return cmd
+        for item in menu:
+            if cmd.lower == item.lower():
+                return item
+
         # Resolve aliases
         for key, meta in menu.items():
             aliases = [alias.lower() for alias in meta.get("aliases", [])]
             if cmd in aliases:
                 return key
+
         # Fallback if command not found
         return ""
 
@@ -262,9 +264,6 @@ def main_alternative():
 
         # Get command and arguments from input string
         command, args = parse_input(user_input)
-
-        # Make Command Case-Insensitive
-        command = command.lower()
 
         # Match input command with command from the menu
         command = resolve_command(command)
