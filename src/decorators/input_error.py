@@ -18,6 +18,7 @@ def input_error(func):
     - KeyError: when a requested key (e.g., contact name) is missing
     - IndexError: when not enough arguments are provided
     - ValueError: when an argument cannot be processed due to invalid value
+    - TypeError: when an argument is invalid type
 
     Returns:
         str: A user-friendly error message, or the original function result
