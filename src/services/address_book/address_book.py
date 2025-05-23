@@ -66,6 +66,7 @@ class AddressBook(UserDict):
 
         Raises:
             ValidationError: If the contact already exists.
+            TypeError: If contact is of incorrect type
 
         Returns:
             str: A message confirming the addition.

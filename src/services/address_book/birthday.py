@@ -25,6 +25,13 @@ class Birthday(Field):
     """
 
     def __init__(self, date_value: str | date):
+        """
+        Initiates Birthday instance.
+
+        Raises:
+            TypeError: If date value is not one of incorrect types.
+            ValidationError: If bad date format is provided.
+        """
         date_obj = self._validate_and_parse_date(date_value)
         super().__init__(date_obj)
 
@@ -44,6 +51,10 @@ class Birthday(Field):
     def value(self, date_value: str | date):
         """
         Sets a new validated birthday date value.
+
+        Raises:
+            TypeError: If date value is not one of incorrect types.
+            ValidationError: If bad date format is provided.
 
         Overrides setter from parent adding validation.
         """

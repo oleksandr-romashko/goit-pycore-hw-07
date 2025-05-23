@@ -16,6 +16,7 @@ Functions:
 """
 from datetime import date as datetime_date
 
+from decorators.service_error import service_error
 from services.address_book.address_book import AddressBook
 from services.address_book.record import Record
 from utils.constants import (
@@ -37,6 +38,7 @@ from utils.constants import (
 from validators.contact_validators import ensure_contacts_storage_not_empty
 
 
+@service_error
 def show_all(book: AddressBook) -> dict[str, str | list[dict[str, str]]]:
     """
     Return all contacts in the address book with their phone numbers.
@@ -44,8 +46,7 @@ def show_all(book: AddressBook) -> dict[str, str | list[dict[str, str]]]:
     Args:
         book (AddressBook): The address book instance.
 
-    Raises:
-        ValidationError: If address book is empty.
+    Handles errors specified in service_error with appropriate user-friendly error message.
 
     Returns:
         dict[str, str | list[dict[str, str]]]: All contacts as structured data.
@@ -54,6 +55,7 @@ def show_all(book: AddressBook) -> dict[str, str | list[dict[str, str]]]:
     return book.to_dict()
 
 
+@service_error
 def add_contact(username: str, phone_number: str, book: AddressBook) -> dict[str, str]:
     """
     Add a new contact with a phone number, or append the phone if the contact already exists.
@@ -62,6 +64,8 @@ def add_contact(username: str, phone_number: str, book: AddressBook) -> dict[str
         username (str): Name of the contact.
         phone_number (str): Phone number to add.
         book (AddressBook): The address book instance to update.
+
+    Handles errors specified in service_error with appropriate user-friendly error message.
 
     Returns:
         dict[str, str]: Message indicating result.
@@ -83,6 +87,7 @@ def add_contact(username: str, phone_number: str, book: AddressBook) -> dict[str
     }
 
 
+@service_error
 def change_contact(
     username: str, prev_phone_number: str, new_phone_number: str, book: AddressBook
 ) -> dict[str, str]:
@@ -95,6 +100,8 @@ def change_contact(
         new_phone_number (str): New phone number to set.
         book (AddressBook): The address book instance containing the contact.
 
+    Handles errors specified in service_error with appropriate user-friendly error message.
+
     Returns:
         dict[str, str]: Message indicating result.
     """
@@ -106,6 +113,7 @@ def change_contact(
     }
 
 
+@service_error
 def delete_contact(username: str, book: AddressBook) -> dict[str, str]:
     """
     Deletes a contact by name from the address book.
@@ -113,6 +121,8 @@ def delete_contact(username: str, book: AddressBook) -> dict[str, str]:
     Args:
         username (str): The name of the contact to delete.
         book (AddressBook): The address book instance.
+
+    Handles errors specified in service_error with appropriate user-friendly error message.
 
     Returns:
         dict[str, str]: Message indicating result.
@@ -124,6 +134,7 @@ def delete_contact(username: str, book: AddressBook) -> dict[str, str]:
     }
 
 
+@service_error
 def show_phone(search_term: str, book: AddressBook) -> dict[str, str | list[dict]]:
     """
     Retrieve the phone number(s) for a contact matching the search term.
@@ -133,6 +144,8 @@ def show_phone(search_term: str, book: AddressBook) -> dict[str, str | list[dict
     Args:
         search_term (str): Search keyword (full or partial contact name).
         book (AddressBook): The address book instance to search.
+
+    Handles errors specified in service_error with appropriate user-friendly error message.
 
     Returns:
         dict: Matching contact(s) and phone number(s) as structured data.
@@ -163,6 +176,7 @@ def show_phone(search_term: str, book: AddressBook) -> dict[str, str | list[dict
     }
 
 
+@service_error
 def remove_phone(username: str, phone_number: str, book: AddressBook) -> dict[str, str]:
     """
     Remove a phone number from a contact in the address book.
@@ -172,8 +186,7 @@ def remove_phone(username: str, phone_number: str, book: AddressBook) -> dict[st
         phone_number (str): The phone number to remove from the contact.
         book (AddressBook): The address book containing the contact.
 
-    Raises:
-        ValueError: If the phone number is not found in the contact's list.
+    Handles errors specified in service_error with appropriate user-friendly error message.
 
     Returns:
         dict[str, str]: Message indicating result.
@@ -186,6 +199,7 @@ def remove_phone(username: str, phone_number: str, book: AddressBook) -> dict[st
     }
 
 
+@service_error
 def add_birthday(username: str, date: str, book: AddressBook) -> dict[str, str]:
     """
     Add a birthday to the specified contact.
@@ -194,6 +208,8 @@ def add_birthday(username: str, date: str, book: AddressBook) -> dict[str, str]:
         username (str): Contact's name.
         date (str): Birthday in string format.
         book (AddressBook): Address book instance.
+
+    Handles errors specified in service_error with appropriate user-friendly error message.
 
     Returns:
         dict[str, str]: Message indicating result.
@@ -213,6 +229,7 @@ def add_birthday(username: str, date: str, book: AddressBook) -> dict[str, str]:
     }
 
 
+@service_error
 def show_birthday(
     username: str, book: AddressBook
 ) -> dict[str, str | list[dict[str, str]]]:
@@ -222,6 +239,8 @@ def show_birthday(
     Args:
         username (str): Contact's name.
         book (AddressBook): Address book instance.
+
+    Handles errors specified in service_error with appropriate user-friendly error message.
 
     Returns:
         dict: Standardized output containing header and optional items.
@@ -245,12 +264,15 @@ def show_birthday(
     }
 
 
+@service_error
 def show_upcoming_birthdays(book: AddressBook) -> dict[str, str | datetime_date]:
     """
     Retrieve birthdays occurring in the upcoming week.
 
     Args:
         book (AddressBook): Address book instance.
+
+    Handles errors specified in service_error with appropriate user-friendly error message.
 
     Returns:
         dict[str, str]: Message indicating upcoming birthday result.
