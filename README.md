@@ -45,10 +45,10 @@ Before starting, ensure that you have the following installed:
 
     ```bash
     git clone https://github.com/oleksandr-romashko/goit-pycore-hw-06.git
-    cd goit-pycore-hw-06
+    cd goit-pycore-hw-07
     ```
 
-    or download zip archive with code directly [from the repository](https://github.com/oleksandr-romashko/goit-pycore-hw-06/archive/refs/heads/main.zip).
+    or download zip archive with code directly [from the repository](https://github.com/oleksandr-romashko/goit-pycore-hw-07/archive/refs/heads/main.zip).
 
 2. **<a name="setup-create-virtual-environment"></a>Create a Virtual Environment**
 
