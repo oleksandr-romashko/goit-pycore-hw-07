@@ -44,7 +44,7 @@ Before starting, ensure that you have the following installed:
     If you haven't cloned the project yet, you can do so using:
 
     ```bash
-    git clone https://github.com/oleksandr-romashko/goit-pycore-hw-06.git
+    git clone https://github.com/oleksandr-romashko/goit-pycore-hw-07.git
     cd goit-pycore-hw-07
     ```
 
