@@ -65,8 +65,12 @@ def handle_all(book: dict) -> str:
     """
     # No validation checks here
 
-    contacts_dict = show_all(book)
-    return format_contacts_output(contacts_dict)
+    result = show_all(book)
+
+    if result.get("message"):
+        return format_text_output(result)
+
+    return format_contacts_output(result)
 
 
 @input_error
