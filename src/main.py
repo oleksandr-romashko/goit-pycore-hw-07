@@ -237,8 +237,9 @@ def main_alternative():
         Returns:
             str: The matched canonical command string, or an empty string if not recognized.
         """
+        cmd = cmd.lower()
         for item in menu:
-            if cmd.lower == item.lower():
+            if cmd == item.lower():
                 return item
 
         # Resolve aliases
